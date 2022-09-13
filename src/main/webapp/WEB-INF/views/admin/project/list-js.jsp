@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ include file="/WEB-INF/constants.jsp"%>
+<%--<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-packaging.js?${jsVersion}"></script>--%>
 <script type="text/javascript">
 //<![CDATA[
 	/*global $ */
@@ -11,7 +12,7 @@
 	var refreshParam = {};
 	var totalRow = 0;
 	const G_ROW_CNT = "${ct:getCodeExpString(ct:getConstDef('CD_EXCEL_DOWNLOAD'), ct:getConstDef('CD_MAX_ROW_COUNT'))}";
-	
+
 	$(document).ready(function () {
 		'use strict';
 		setMaxRowCnt(G_ROW_CNT); // maxRowCnt 값 setting
@@ -292,7 +293,13 @@
 								|| rowObject.statusRequestYn == "Y" ) {
 								display = "N/A";
 							} else if(rowObject.identificationStatus!="") {
-								display = "<div class=\"tcenter\"><a class='btnPG wauto' onclick=\"fn.mvVerification("+options.rowId+")\">Start</a></div>";
+                                if (options.rowId == 1) {
+                                    display = `<div class=\"tcenter\">
+                                        <a id='tutorial_25' class='btnPG wauto' onclick=\"fn.mvVerification("+options.rowId+")\">Start</a>
+                                    </div>`;
+                                } else {
+                                    display = "<div class=\"tcenter\"><a class='btnPG wauto' onclick=\"fn.mvVerification("+options.rowId+")\">Start</a></div>";
+                                }
 							}
 							
 							break;

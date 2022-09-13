@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ include file="/WEB-INF/constants.jsp"%>
+<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-packaging.js?${jsVersion}"></script>
 <!-- wrap -->
 <div id="wrapIframe">
 	<!---->
@@ -212,6 +213,7 @@
 				<input type="button" value="Add" class="btnColor btnAdd" onclick="createTabInFrame('New_Project', '#<c:url value="/project/edit"/>')" />
 			</span>
 		</div>
+		<button id='continue_tutorial_25' style="position: fixed; bottom: 30px; left: 30px; font-size: 30px; padding: 5px;">Continue tutorial (packaging)</button>
 		<!---->
 	</div>
 	<!---->
