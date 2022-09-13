@@ -14,15 +14,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1003,6 +995,7 @@ public class CoMailManager extends CoTopComponent {
     		case CoConstDef.CD_MAIL_TYPE_PARTER_DELETED:
     		case CoConstDef.CD_MAIL_TYPE_PARTER_WATCHER_REGISTED:
     		case CoConstDef.CD_MAIL_TYPE_PARTER_MODIFIED_COMMENT:
+    		case CoConstDef.CD_MAIL_TYPE_PARTNER_BINARY_DATA_COMMIT:
     			// to :  creator + cc : watcher + reviewer
     			partnerInfo = mailManagerMapper.getPartnerInfo(bean.getParamPartnerId());
     			if(CoConstDef.CD_MAIL_TYPE_PARTER_MODIFIED_COMMENT.equals(bean.getMsgType())) {
@@ -1094,6 +1087,7 @@ public class CoMailManager extends CoTopComponent {
     				if(CoConstDef.CD_MAIL_TYPE_PARTER_REQ_REVIEW.equals(bean.getMsgType())
     						|| CoConstDef.CD_MAIL_TYPE_PARTER_SELF_REJECT.equals(bean.getMsgType())
     						|| CoConstDef.CD_MAIL_TYPE_PARTER_DELETED.equals(bean.getMsgType())
+    						|| CoConstDef.CD_MAIL_TYPE_PARTNER_BINARY_DATA_COMMIT.equals(bean.getMsgType())
     						) {
         				if(!isEmpty(partnerInfo.getReviewer())) {
         					toList.addAll(Arrays.asList(selectMailAddrFromIds(new String[]{partnerInfo.getReviewer()})));
@@ -2586,6 +2580,7 @@ public class CoMailManager extends CoTopComponent {
 				param.add(bean.getParamPartnerId());
 				return makePartnerBasicInfo(getMailComponentData(param, component));
 			case CoConstDef.CD_MAIL_COMPONENT_PARTNER_OSSLIST:
+			case CoConstDef.CD_MAIL_COMPONENT_PARTNER_DISCLOSEOSSINFO:
 				param.add(bean.getParamPartnerId());
 				return makePartnerOssListInfo(getMailComponentData(param, component));
 			case CoConstDef.CD_MAIL_COMPONENT_BATRESULT:
@@ -2616,57 +2611,25 @@ public class CoMailManager extends CoTopComponent {
 	 */
 	private List<OssComponents> makePartnerOssListInfo(List<Map<String, Object>> mailComponentData) {
 		List<OssComponents> list = null;
+		Set<Map<String, String>> ossSet = new HashSet<Map<String, String>>();
 		if(mailComponentData != null && !mailComponentData.isEmpty()) {
 			list = new ArrayList<>();
 			for(Map<String, Object> dataMap : mailComponentData) {
-				OssComponents bean = new OssComponents();
-				bean.setOssName((String) dataMap.get("OSS_NAME"));
-				bean.setOssVersion((String) dataMap.get("OSS_VERSION"));
-				bean.setLicenseName((String) dataMap.get("LICENSE_NAME"));
-				
-				String ossId = (String) dataMap.get("OSS_ID");
-				String ossLicenseIds = avoidNull((String) dataMap.get("LICENSE_ID_LIST"));
-				String copyrightStr = "";  // oss master의 copyright
-				String line = "<br>";
-				
-				if(!isEmpty(ossId)) {
-					OssMaster masterBean = CoCodeManager.OSS_INFO_BY_ID.get(ossId);
-					
-					// 우선 oss master의 copy right를 설정한다. / null값 생략
-					if(!isEmpty(masterBean.getCopyright())){
-						copyrightStr = masterBean.getCopyright().replace("\n", line);
-					}else if(!isEmpty(((String) dataMap.get("COPYRIGHT")).replace("\n", ""))){
-						copyrightStr = ((String) dataMap.get("COPYRIGHT")).replace("\n", line); 
-					}
-					
-					// multi 인경우 OSS Master에 등록된 순서대로 비교하여 exclude를 제외하고 추가해야함
-					if(CoConstDef.LICENSE_DIV_MULTI.equals(masterBean.getLicenseDiv())) {
-						List<String> licenseIdList = Arrays.asList(ossLicenseIds.split(","));
-						for(OssLicense licenseBean : masterBean.getOssLicenses()) {
-							if(licenseIdList.contains(licenseBean.getLicenseId())) {
-								// license별 copyright가 적용되어 있는 경우 추가
-								if(!isEmpty(licenseBean.getOssCopyright())) {
-									if(!isEmpty(copyrightStr)){
-										copyrightStr += "<br>";
-									}
-									copyrightStr += licenseBean.getOssCopyright().replace("\n", line);
-								}
-							}
-						}
-					} else {
-						// 싱글의 경우는 license별 copyright를 추가할 필요 없음 -> single License 일때 copyright를 수기로 입력시 해당 field값을 넣어줌.
-						copyrightStr = ((String) dataMap.get("COPYRIGHT")).replace("\n", line);
-					}
-					
-				} else {
-					copyrightStr = ((String) dataMap.get("COPYRIGHT")).replace("\n", line);
-				}
+				Map<String, String> oss = new HashMap<String, String>();
+				oss.put("OSS_NAME", (String)dataMap.get("OSS_NAME"));
+				oss.put("OSS_VERSION", (String)dataMap.get("OSS_VERSION"));
+				oss.put("LICENSE_NAME", (String)dataMap.get("LICENSE_NAME"));
+				ossSet.add(oss);
+			}
 
-				bean.setCopyrightText(copyrightStr);
-				
-				
+			for(Map<String, String> dataSet : ossSet) {
+				OssComponents bean = new OssComponents();
+				bean.setOssName(dataSet.get("OSS_NAME"));
+				bean.setOssVersion(dataSet.get("OSS_VERSION"));
+				bean.setLicenseName(dataSet.get("LICENSE_NAME"));
 				list.add(bean);
 			}
+
 		}
 		return list;
 	}

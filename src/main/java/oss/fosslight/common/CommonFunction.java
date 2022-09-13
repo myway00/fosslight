@@ -81,12 +81,15 @@ import oss.fosslight.domain.OssComponents;
 import oss.fosslight.domain.OssComponentsLicense;
 import oss.fosslight.domain.OssLicense;
 import oss.fosslight.domain.OssMaster;
+import oss.fosslight.domain.PartnerMaster;
 import oss.fosslight.domain.Project;
 import oss.fosslight.domain.ProjectIdentification;
 import oss.fosslight.domain.T2File;
 import oss.fosslight.domain.T2Users;
 import oss.fosslight.domain.UploadFile;
 import oss.fosslight.service.OssService;
+import oss.fosslight.service.PartnerService;
+import oss.fosslight.service.ProjectService;
 import oss.fosslight.service.T2UserService;
 import oss.fosslight.util.DateUtil;
 import oss.fosslight.util.FileUtil;
@@ -108,6 +111,18 @@ public class CommonFunction extends CoTopComponent {
 	
 	public static void setOssService(OssService service) {
 		ossService = service;
+	}
+	
+	private static ProjectService projectService;
+	
+	public static void setProjectService(ProjectService service) {
+		projectService = service;
+	}
+	
+	private static PartnerService partnerService;
+	
+	public static void setPartnerService(PartnerService service) {
+		partnerService = service;
 	}
 	
     public static String getCoConstDefVal(String nm) {
@@ -199,7 +214,7 @@ public class CommonFunction extends CoTopComponent {
     }
     
     public static String getCurrentDateTime() {
-        DateFormat df = new SimpleDateFormat("yyyyMMdd");
+        DateFormat df = new SimpleDateFormat("yyMMdd");
         return df.format(new Date());
     }
     
@@ -4061,75 +4076,89 @@ public class CommonFunction extends CoTopComponent {
 		}
 	}
 	
+	public static String getDiffItemCommentPartner(PartnerMaster beforeBean, PartnerMaster afterBean) {
+		String comment = "<p><strong>Division</strong><br />";
+		comment += "Before : " + CoCodeManager.getCodeString(CoConstDef.CD_USER_DIVISION, beforeBean.getDivision()) + "<br />";
+		comment += "After : <span style='background-color:yellow'>" + CoCodeManager.getCodeString(CoConstDef.CD_USER_DIVISION, afterBean.getDivision()) + "</span><br /></p>";
+		
+		return comment;
+	}
+	
 	public static String getDiffItemComment(Project beforeBean, Project afterBean) {
+		return getDiffItemComment(beforeBean, afterBean, false);
+	}
+	
+	public static String getDiffItemComment(Project beforeBean, Project afterBean, boolean booleanFlag) {
 		String comment = "";
 		
-		// Project Name
-		if(!beforeBean.getPrjName().equals(afterBean.getPrjName())) {
-			comment += "<p><strong>Project Name</strong><br />";
-			comment += "Before : " + beforeBean.getPrjName() + "<br />";
-			comment += "After : " + afterBean.getPrjName() + "<br /></p>";
-		}
+		if(booleanFlag) {
+			// Project Name
+			if(!beforeBean.getPrjName().equals(afterBean.getPrjName())) {
+				comment += "<p><strong>Project Name</strong><br />";
+				comment += "Before : " + beforeBean.getPrjName() + "<br />";
+				comment += "After : " + afterBean.getPrjName() + "<br /></p>";
+			}
 
-		// Project Version
-		if(!beforeBean.getPrjVersion().equals(afterBean.getPrjVersion())) {
-			comment += "<p><strong>Project Version</strong><br />";
-			comment += "Before : " + beforeBean.getPrjVersion() + "<br />";
-			comment += "After : " + afterBean.getPrjVersion() + "<br /></p>";
-		}
-		
-		// Operating System
-		if(!beforeBean.getOsType().equals(afterBean.getOsType())) {
-			comment += "<p><strong>Operating System</strong><br />";
-			comment += "Before : " + beforeBean.getOsType() + "<br />";
-			comment += "After : " + afterBean.getOsType() + "<br /></p>";
-		}
-		
-		// Distribution Type
-		if(!beforeBean.getDistributionType().equals(afterBean.getDistributionType())) {
-			comment += "<p><strong>Distribution Type</strong><br />";
-			comment += "Before : " + beforeBean.getDistributionType() + "<br />";
-			comment += "After : " + afterBean.getDistributionType() + "<br /></p>";
-		}
-		
-		
-		if(!beforeBean.getNetworkServerType().equals(afterBean.getNetworkServerType())) {
-			comment += "<p><strong>Network Service only?</strong><br />";
-			comment += "Before : " + beforeBean.getNetworkServerType() + "<br />";
-			comment += "After : " + afterBean.getNetworkServerType() + "<br /></p>";
-		}
-		
-		if(!beforeBean.getDistributeTarget().equals(afterBean.getDistributeTarget())) {
-			comment += "<p><strong>Distribution Site</strong><br />";
-			comment += "Before : " + beforeBean.getDistributeTarget() + "<br />";
-			comment += "After : " + afterBean.getDistributeTarget() + "<br /></p>";
-		}
-		
-		if(!beforeBean.getNoticeType().equals(afterBean.getNoticeType())) {
-			comment += "<p><strong>OSS Notice</strong><br />";
-			comment += "Before : " + beforeBean.getNoticeType() + "<br />";
-			comment += "After : " + afterBean.getNoticeType() + "<br /></p>";
-		}
-		
-		if(!beforeBean.getPriority().equals(afterBean.getPriority())) {
-			comment += "<p><strong>Priority</strong><br />";
-			comment += "Before : " + beforeBean.getPriority() + "<br />";
-			comment += "After : " + afterBean.getPriority() + "</p>";
-		}
-		
-		// Project Division
-		if(!beforeBean.getDivision().equals(afterBean.getDivision())) {
-			comment += "<p><strong>Division</strong><br />";
-			comment += "Before : " + CoCodeManager.getCodeString(CoConstDef.CD_USER_DIVISION, beforeBean.getDivision()) + "<br />";
-			comment += "After : " + CoCodeManager.getCodeString(CoConstDef.CD_USER_DIVISION, afterBean.getDivision()) + "<br /></p>";
-		}
-		
-		String before = beforeBean.getComment().replaceAll("(\r\n|\r|\n|\n\r)", "");
-		String after = afterBean.getComment().replaceAll("(\r\n|\r|\n|\n\r)", "");
-		if(!before.equals(after)) {
-			comment += "<p><strong>Additional Information</strong><br />";
-			comment += "Before : " + beforeBean.getComment() + "<br />";
-			comment += "After : " + afterBean.getComment() + "</p>";
+			// Project Version
+			if(!beforeBean.getPrjVersion().equals(afterBean.getPrjVersion())) {
+				comment += "<p><strong>Project Version</strong><br />";
+				comment += "Before : " + beforeBean.getPrjVersion() + "<br />";
+				comment += "After : " + afterBean.getPrjVersion() + "<br /></p>";
+			}
+			
+			// Operating System
+			if(!beforeBean.getOsType().equals(afterBean.getOsType())) {
+				comment += "<p><strong>Operating System</strong><br />";
+				comment += "Before : " + beforeBean.getOsType() + "<br />";
+				comment += "After : " + afterBean.getOsType() + "<br /></p>";
+			}
+			
+			// Distribution Type
+			if(!beforeBean.getDistributionType().equals(afterBean.getDistributionType())) {
+				comment += "<p><strong>Distribution Type</strong><br />";
+				comment += "Before : " + beforeBean.getDistributionType() + "<br />";
+				comment += "After : " + afterBean.getDistributionType() + "<br /></p>";
+			}
+			
+			
+			if(!beforeBean.getNetworkServerType().equals(afterBean.getNetworkServerType())) {
+				comment += "<p><strong>Network Service only?</strong><br />";
+				comment += "Before : " + beforeBean.getNetworkServerType() + "<br />";
+				comment += "After : " + afterBean.getNetworkServerType() + "<br /></p>";
+			}
+			
+			if(!beforeBean.getDistributeTarget().equals(afterBean.getDistributeTarget())) {
+				comment += "<p><strong>Distribution Site</strong><br />";
+				comment += "Before : " + beforeBean.getDistributeTarget() + "<br />";
+				comment += "After : " + afterBean.getDistributeTarget() + "<br /></p>";
+			}
+			
+			if(!beforeBean.getNoticeType().equals(afterBean.getNoticeType())) {
+				comment += "<p><strong>OSS Notice</strong><br />";
+				comment += "Before : " + beforeBean.getNoticeType() + "<br />";
+				comment += "After : " + afterBean.getNoticeType() + "<br /></p>";
+			}
+			
+			if(!beforeBean.getPriority().equals(afterBean.getPriority())) {
+				comment += "<p><strong>Priority</strong><br />";
+				comment += "Before : " + beforeBean.getPriority() + "<br />";
+				comment += "After : " + afterBean.getPriority() + "</p>";
+			}
+			
+			String before = beforeBean.getComment().replaceAll("(\r\n|\r|\n|\n\r)", "");
+			String after = afterBean.getComment().replaceAll("(\r\n|\r|\n|\n\r)", "");
+			if(!before.equals(after)) {
+				comment += "<p><strong>Additional Information</strong><br />";
+				comment += "Before : " + beforeBean.getComment() + "<br />";
+				comment += "After : " + afterBean.getComment() + "</p>";
+			}
+		} else {
+			// Project Division
+			if(!beforeBean.getDivision().equals(afterBean.getDivision())) {
+				comment += "<p><strong>Division</strong><br />";
+				comment += "Before : " + CoCodeManager.getCodeString(CoConstDef.CD_USER_DIVISION, beforeBean.getDivision()) + "<br />";
+				comment += "After : <span style='background-color:yellow'>" + CoCodeManager.getCodeString(CoConstDef.CD_USER_DIVISION, afterBean.getDivision()) + "</span><br /></p>";
+			}
 		}
 		
 		return comment;
@@ -4360,15 +4389,22 @@ public class CommonFunction extends CoTopComponent {
 	public static List<ProjectIdentification> identificationUnclearObligationCheck(List<ProjectIdentification> list, Map<String, String> errorCodeMap, Map<String, String> warningCodeMap) {
 		List<String> UNCLEAR_OBLIGATION_CODE_LIST = Arrays.asList(new String[] {
 				"LICENSE_NAME.REQUIRED" ,"LICENSE_NAME.UNCONFIRMED", "LICENSE_NAME.INCLUDE_MULTI_OPERATE", "LICENSE_NAME.NOLICENSE", "LICENSE_NAME.INCLUDE_DUAL_OPERATE"
-				, "OSS_NAME.REQUIRED", "OSS_NAME.UNCONFIRMED", "OSS_VERSION.UNCONFIRMED", "OSS_NAME.DEACTIVATED"
-		}) ;
+		});
+		
+		List<String> UNCLEAR_OBLIGATION_CODE_NOTLICENSE_LIST = Arrays.asList(new String[] {
+				"OSS_NAME.REQUIRED", "OSS_NAME.UNCONFIRMED", "OSS_VERSION.UNCONFIRMED", "OSS_NAME.DEACTIVATED"
+		});
 		
 		List<String> unclearObligationList = new ArrayList<>();
+		List<String> unclearObligationNotLicenseList = new ArrayList<>();
 		
 		if(errorCodeMap != null) {
 			for(String key : errorCodeMap.keySet()) {
 				if(key.indexOf(".") > -1 && UNCLEAR_OBLIGATION_CODE_LIST.contains(errorCodeMap.get(key))) {
 					unclearObligationList.add(key.substring(key.indexOf(".") + 1, key.length()));
+				}
+				if(key.indexOf(".") > -1 && UNCLEAR_OBLIGATION_CODE_NOTLICENSE_LIST.contains(errorCodeMap.get(key))) {
+					unclearObligationNotLicenseList.add(key.substring(key.indexOf(".") + 1, key.length()));
 				}
 			}
 		}
@@ -4376,6 +4412,9 @@ public class CommonFunction extends CoTopComponent {
 			for(String key : warningCodeMap.keySet()) {
 				if(key.indexOf(".") > -1 && UNCLEAR_OBLIGATION_CODE_LIST.contains(warningCodeMap.get(key))) {
 					unclearObligationList.add(key.substring(key.indexOf(".") + 1, key.length()));
+				}
+				if(key.indexOf(".") > -1 && UNCLEAR_OBLIGATION_CODE_NOTLICENSE_LIST.contains(warningCodeMap.get(key))) {
+					unclearObligationNotLicenseList.add(key.substring(key.indexOf(".") + 1, key.length()));
 				}
 			}
 		}
@@ -4398,6 +4437,16 @@ public class CommonFunction extends CoTopComponent {
 						|| (!isEmpty(bean.getObligationType()) && (checkIncludeUnconfirmedLicense(bean.getComponentLicenseList()) || checkIncludeNotDeclaredLicense(bean.getOssName(), bean.getOssVersion(), bean.getComponentLicenseList())))) {
 					bean.setObligationGrayFlag(CoConstDef.FLAG_YES);
 					bean.setObligationMsg(getMessage("msg.project.obligation.unclear"));
+				}
+				 
+				if(unclearObligationNotLicenseList.contains(bean.getGridId())) {
+					if(isEmpty(bean.getObligationType())){
+						String obligationType = CommonFunction.getObligationTypeWithSelectedLicense(bean);
+						if(!isEmpty(obligationType)) {
+							bean.setObligationType(obligationType);
+							continue;
+						}
+					}
 				}
 			}
 		}
@@ -4514,5 +4563,58 @@ public class CommonFunction extends CoTopComponent {
 		}
 		
 		return licenseList;
+	}
+
+	public static List<String> checkUserPermissions(String userId, String[] prjIds, String gubn) {
+		List<String> notPermissionList = new ArrayList<>();
+		List<String> userIdList = null;
+		
+		switch(gubn) {
+		
+		case "project":
+			Project param = new Project();
+			for(int i=0; i<prjIds.length; i++) {
+				userIdList = new ArrayList<>();
+				param.setPrjId(prjIds[i]);
+				Project bean = projectService.getProjectDetail(param);
+				
+				userIdList.add(bean.getCreator());
+				if(bean.getWatcherList() != null) {
+					for(String watcher : bean.getWatcherList().stream().map(e -> e.getPrjUserId()).collect(Collectors.toList())) {
+						userIdList.add(watcher);
+					}
+				}
+				
+				userIdList = userIdList.stream().distinct().collect(Collectors.toList());
+				if(!userIdList.contains(userId)) {
+					notPermissionList.add(prjIds[i]);
+				}
+			}
+			break;
+		
+		case "partner":
+			PartnerMaster partner = new PartnerMaster();
+			for(int i=0; i<prjIds.length; i++) {
+				userIdList = new ArrayList<>();
+				partner.setPartnerId(prjIds[i]);
+				PartnerMaster bean = partnerService.getPartnerMasterOne(partner);
+				
+				userIdList.add(bean.getCreator());
+				if(bean.getPartnerWatcher() != null) {
+					for(String watcher : bean.getPartnerWatcher().stream().map(e -> e.getUserId()).collect(Collectors.toList())) {
+						userIdList.add(watcher);
+					}
+				}
+				
+				userIdList = userIdList.stream().distinct().collect(Collectors.toList());
+				if(!userIdList.contains(userId)) {
+					notPermissionList.add(prjIds[i]);
+				}
+			}
+			break;
+		}
+		
+		Collections.sort(notPermissionList);
+		return notPermissionList;
 	}
 }

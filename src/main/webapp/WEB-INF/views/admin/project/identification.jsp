@@ -1,5 +1,7 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ include file="/WEB-INF/constants.jsp"%>
+<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-identification.js?${jsVersion}"></script>
+<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-identification-1.js?${jsVersion}"></script><!--한지영-->
 <jsp:include page="../common/gridCommonFn.jsp" flush="false" />
 <!-- wrap -->
 <c:set var="isCommited" value="${project.verificationStatus eq 'CONF'}"/>
@@ -9,6 +11,8 @@
 			<h2>Project Information</h2>
 			<ul>
 				<li class="first"><span>Project Name</span><strong><label id="vPrjName"></label>
+				    <input type="button" value=" 📢 Continue Tutorial " id="continue_tutorial" />
+				    <input type="button" value=" start tutorial " id="start_tutorial" /><!--한지영-->
 					<span id="editTab" class="btnIcon basic" style="display:inline-block;width:16px;padding:0;margin-left:3px;">Basic Info</span>
 					<c:if test="${project.verificationStatus ne 'NA' and (not empty project.verificationStatus or project.identificationStatus eq 'CONF')}">
 					<span id="packagingTab" class="btnIcon packag" style="display:inline-block;width:16px;padding:0;margin-left:3px;">Packaging</span>
@@ -26,8 +30,8 @@
 		<div class="projdecTab">
 			<div class="subTab">
 			<div class="tabMenu">
-				<a rel="partyDiv">3rd party</a>
-				<a rel="srcDiv">SRC</a>
+				<a rel="partyDiv" id="third_party">3rd party</a>
+				<a rel="srcDiv" id="src_tab">SRC</a>
 				<a rel="binDiv">BIN</a>
 				<a rel="binAndroidDiv">BIN (Android)</a>
 				<a rel="bomDiv">BOM</a>
@@ -346,23 +350,6 @@
 	                        <input id="srcResetUp" type="button" value="Reset" class="btnColor btnReset srcBtn idenReset" />
 	                        <input id="srcSaveUp" type="button" value="Save" class="btnSave btnColor red idenSave"/>
                         </c:if>
-                    </span>
-                </div>
-				<!---->
-				<div class="jqGridSet srcBtn">
-					<table id="srcList"><tr><td></td></tr></table>
-					<div id="srcPager"></div>
-				</div>
-				<!---->
-				<div class="btnLayout">
-					<span class="right">
-						<input type="button" value="Export" onclick="src_fn.downloadExcel()" class="btnColor red btnExpor srcBtn" />
-						<input type="button" value="Yaml" class="btnColor red btnExport" onclick="com_fn.downloadYaml('SRC')"/>
-						<c:if test="${project.dropYn ne 'Y'}">
-							<input id="srcReset" type="button" value="Reset" class="btnColor btnReset srcBtn idenReset" />
-							<input id="srcSave" type="button" value="Save" class="btnSave btnColor red idenSave"/>
-						</c:if>
-						<!-- Popup -->
 						<div class="pop savePop">
 							<div class="popdata">
 								<p>The following open source and license names will be changed to names registered on the system for efficient management.</p>
@@ -376,10 +363,13 @@
 								<input type="button" value="OK" class="btnColor red" id="nicknameOk"/>
 							</div>
 						</div>
-						<!-- //Popup -->
-					</span>
-				</div>
+                    </span>
+                </div>
 				<!---->
+				<div class="jqGridSet srcBtn">
+					<table id="srcList"><tr><td></td></tr></table>
+					<div id="srcPager"></div>
+				</div>
 			</div>
 		</div>
 <!-- BIN start ************************************************************************************************************ -->
@@ -533,20 +523,6 @@
 	                        <input id="binReset" type="button" value="Reset" class="btnColor btnReset binBtn idenReset" />
 	                        <input id="binSave" type="button" value="Save" class="btnSave btnColor red idenSave"/>
                         </c:if>
-                    </span>
-                </div>
-				<div class="jqGridSet binBtn">
-					<table id="binList"><tr><td></td></tr></table>
-					<div id="binPager"></div>
-				</div>
-				<!---->
-				<div class="btnLayout">
-					<span class="right">
-						<input type="button" value="Export" onclick="bin_fn.downloadExcel()" class="btnColor red btnExpor binBtn" />
-						<input type="button" value="Yaml" class="btnColor red btnExport" onclick="com_fn.downloadYaml('BIN')"/>
-						<input id="binReset" type="button" value="Reset" class="btnColor btnReset binBtn idenReset" />
-						<input id="binSave" type="button" value="Save" class="btnSave btnColor red idenSave"/>
-						<!-- Popup -->
 						<div class="pop savePop">
 							<div class="popdata">
 								<p>The following open source and license names will be changed to names registered on the system for efficient management.</p>
@@ -560,10 +536,12 @@
 								<input type="button" value="OK" class="btnColor red" id="binNicknameOk"/>
 							</div>
 						</div>
-						<!-- //Popup -->
-					</span>
+                    </span>
+                </div>
+				<div class="jqGridSet binBtn">
+					<table id="binList"><tr><td></td></tr></table>
+					<div id="binPager"></div>
 				</div>
-				<!---->
 			</div>
 		</div>
 <!-- BIN Android start ************************************************************************************************************ -->
@@ -771,22 +749,6 @@
 	                        <input id="binAndroidReset" type="button" value="Reset" class="btnColor btnReset binAndroidBtn idenReset" />
 	                        <input id="binAndroidSave" type="button" value="Save" class="btnSave btnColor red idenSave"/>
                         </c:if>
-                    </span>
-                </div>
-				<div class="jqGridSet binAndroidBtn">
-					<table id="binAndroidList"><tr><td></td></tr></table>
-					<div id="binAndroidPager"></div>
-				</div>
-				<!---->
-				<div class="btnLayout">
-					<span class="right">
-						<input type="button" value="Export" onclick="binAndroid_fn.downloadExcel()" class="btnColor red btnExpor binAndroidBtn" />
-						<input type="button" value="Yaml" class="btnColor red btnExport" onclick="com_fn.downloadYaml('ANDROID')"/>
-						<c:if test="${project.dropYn ne 'Y'}">
-							<input id="binAndroidReset" type="button" value="Reset" class="btnColor btnReset binAndroidBtn idenReset" />
-							<input id="binAndroidSave" type="button" value="Save" class="btnSave btnColor red idenSave"/>
-						</c:if>
-						<!-- Popup -->
 						<div class="pop savePop">
 							<div class="popdata">
 								<p>The following open source and license names will be changed to names registered on the system for efficient management.</p>
@@ -800,10 +762,12 @@
 								<input type="button" value="OK" class="btnColor red" id="androidNicknameOk"/>
 							</div>
 						</div>
-						<!-- //Popup -->
-					</span>
+                    </span>
+                </div>
+				<div class="jqGridSet binAndroidBtn">
+					<table id="binAndroidList"><tr><td></td></tr></table>
+					<div id="binAndroidPager"></div>
 				</div>
-				<!---->
 			</div>
 		</div>
 <!-- BOM Start ************************************************************************************************************ -->
@@ -820,11 +784,12 @@
 							 </c:if>
 						</span>
 					</c:if>
+					<input type="hidden" id="mergeYn"  style="display: none;"/>
                     <span class="right">
                         <input type="button" value="Export" class="btnColor red btnExport" onclick="bom_fn.downloadExcel()"/>
                         <input type="button" value="Yaml" class="btnColor red btnExport" onclick="com_fn.downloadYaml('BOM')"/>
                         <c:if test="${project.dropYn ne 'Y'}">
-	                        <input id="bomReset" type="button" value="Reset" class="btnColor btnReset idenReset" />
+	                        <input id="bomResetUp" type="button" value="Reset" class="btnColor btnReset idenReset" />
 	                        <input id="bomSaveUp" type="button" value="Merge And Save" class="btnColor red btnSave idenSave" style="width:120px;"/>
                         </c:if>
                     </span>
@@ -832,18 +797,6 @@
 				<div class="jqGridSet">
 					<table id="bomList"><tr><td></td></tr></table>
 					<div id="bomPager"></div>
-				</div>
-				<!---->
-				<div class="btnLayout">
-					<input type="hidden" id="mergeYn"  style="display: none;"/>
-					<span class="right">
-						<input type="button" value="Export" class="btnColor red btnExport" onclick="bom_fn.downloadExcel()"/>
-						<input type="button" value="Yaml" class="btnColor red btnExport" onclick="com_fn.downloadYaml('BOM')"/>
-						<c:if test="${project.dropYn ne 'Y'}">
-							<input id="bomResetUp" type="button" value="Reset" class="btnColor btnReset idenReset" />
-							<input id="bomSave" type="button" value="Merge And Save" class="btnColor red btnSave idenSave" style="width:120px;"/>
-						</c:if>
-					</span>
 				</div>
 			</div>
 		</div>

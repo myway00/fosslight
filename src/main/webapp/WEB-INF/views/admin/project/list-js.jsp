@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ include file="/WEB-INF/constants.jsp"%>
 <%--<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-packaging.js?${jsVersion}"></script>--%>
+
 <script type="text/javascript">
 //<![CDATA[
 	/*global $ */
@@ -29,7 +30,12 @@
 		//}
 		
 		showHelpLink("Project_List_Main");
-	});	
+
+
+		//ㅊㄱ
+
+		//ㅊㄱ
+	});
 	
 	//데이터 객체
 	var gridTooltip = {
@@ -989,10 +995,27 @@
 						data: JSON.stringify({'prjIds':changeDivisionArr, 'prjDivision':division}),
 						contentType : 'application/json',
 						success: function (data) {
-							alertify.alert('<spring:message code="msg.common.success" />', function(){
-								reloadTabInframe('<c:url value="/project/list"/>');
-								activeTabInFrameList("PROJECT");
-							});
+							if("true" == data.isValid){
+								alertify.alert('<spring:message code="msg.common.success" />', function(){
+									reloadTabInframe('<c:url value="/project/list"/>');
+									activeTabInFrameList("PROJECT");
+								});
+							} else {
+								var list = [];
+								list = data.resultData;
+								
+								var msg = '<spring:message code="msg.project.check.division.permissions" />';
+								msg += '<br/> - '
+
+								for(var i=0; i<list.length; i++){
+									msg += 'PRJ-' + list[i];
+									if(i < list.length - 1){
+										msg += ', ';
+									}
+								}
+								
+								alertify.alert(msg, function(){});
+							}
 						},
 						error : function(){
 							alertify.error('<spring:message code="msg.common.valid2" />', 0);

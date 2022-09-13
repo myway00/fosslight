@@ -25,20 +25,15 @@
 	
 	$(document).ready(function() {
 		'use strict';
+		data.init();
 		initSample();
 		initSample2();
-		data.init();
 		evt.init();
 
-        if($('input[name=prjId]').val() == "" || copyFlag == 'Y') {
-            $("#editAdditionalInfomation").hide();
-        } else {
-            if(CKEDITOR.instances.editor) {
-                var _editor = CKEDITOR.instances.editor;
-                _editor.destroy();
-            }
-            CKEDITOR.replace('editor', {customConfig:'<c:url value="/js/customEditorConf_Comment.js"/>'});
-        }
+		activeLink();
+		if('${project.viewOnlyFlag}' == 'Y') {
+            initCKEditorNoToolbar('editor', true);
+		}
 
         var userDivision = $('#division');
         for(var i=0;i<userDivision.children().length;i++){
@@ -551,44 +546,10 @@
 	};
 	
 	var fn = {
-	        editComment : function() {
-	            $("#saveBtn").show();
-	            $("#cancelBtn").show();
-	            $("#editAdditionalInfomation").hide();
-	            if(CKEDITOR.instances.editor) {
-	                var _editor = CKEDITOR.instances.editor;
-	                _editor.destroy();
-	            }
-	            CKEDITOR.replace('editor');
-	            var originComment = CKEDITOR.instances.editor.getData();
-
-	            $("#saveBtn").click(function(e){
-	                e.preventDefault();
-	                if(CKEDITOR.instances.editor) {
-	                    var _editor = CKEDITOR.instances.editor;
-	                    _editor.destroy();
-	                }
-	                CKEDITOR.replace('editor', {customConfig:'<c:url value="/js/customEditorConf_Comment.js"/>'});
-	                $("#saveBtn").hide();
-	                $("#cancelBtn").hide();
-	                $("#editAdditionalInfomation").show();
-	                fn.saveSubmit(false);
-	            });
-
-	            $("#cancelBtn").click( function(e) {
-	                e.preventDefault();
-	                if(CKEDITOR.instances.editor) {
-	                    var _editor = CKEDITOR.instances.editor;
-	                    _editor.destroy();
-	                }
-	                CKEDITOR.replace('editor', {customConfig:'<c:url value="/js/customEditorConf_Comment.js"/>'});
-	                CKEDITOR.instances.editor.setData(originComment);
-	                $("#saveBtn").hide();
-	                $("#cancelBtn").hide();
-	                $("#editAdditionalInfomation").show();
-	                $("#cancelBtn").unbind("click");
-	            });
-	        },
+		editComment : function() {
+			initCKEditorToolbar("editor");
+			fn.saveSubmit(false);
+		},
 		copy : function(){
 			var prjId = $('input[name=prjId]').val();
 			
@@ -601,8 +562,9 @@
 			var rlt = division+((userId!="") ? "/"+userId : "");
 			var html  = '<span><input class="watcherTags" type="text" name="watchers" value="'+rlt+'" style="display: none;"/>';
 			html += '<strong>'+str+'</strong>';
-			html +='<input type="button" value="Delete" class="smallDelete" onclick="fn.removeWatcher(\''+division+'\',\''+userId+'\');" /></span>';
-
+			if('${project.viewOnlyFlag}' != "Y") {
+				html += '<input type="button" value="Delete" class="smallDelete" onclick="fn.removeWatcher(\'' + division + '\',\'' + userId + '\');" /></span>';
+			}
 			target.append(html);
 
 			$('div.multiTxtSet2 .smallDelete').on('click', function(){
@@ -1189,7 +1151,7 @@
 					return false;
 				}
 				
-				var param = {referenceId : '${project.prjId}', referenceDiv :'19', contents : editorVal, mailSendType : type};
+				var param = {referenceId : '${project.prjId}', referenceDiv :'19', contents : replaceWithLink(editorVal), mailSendType : type};
 				
 				$.ajax({
 					url : '<c:url value="/project/sendComment"/>',
@@ -1501,7 +1463,7 @@
 							_editor.destroy();
 						}
 						
-						CKEDITOR.replace('editor4', {});
+						CKEDITOR.replace('editor4', {autoGrow_maxHeight:200});
 					</c:if>
 				</c:if>
 
@@ -1637,6 +1599,46 @@
             				event.returnValue = false;
             	}
 			},
+			shareUrl : function(){
+				var copyUrl = "";
+				var protocol = window.location.protocol;
+				var host =  window.location.host;
+				copyUrl = protocol + "//" + host + "/project/view/${project.prjId}";
+				$("#copyUrl").val(copyUrl);
+				
+				//launch it.
+				var btnHtm = '<b>Share Link</b><br>';
+				btnHtm += '<input type="text" value="'+copyUrl+'" style="width:460px;" disabled/><br><br>';
+				btnHtm += '<input type="button" value="Copy" class="btnCancel btnColor red right" style="height:30px;width:100px;"onclick="fn.copyUrl(this)"/>';
+
+				if(!alertify.myAlert){
+					//define a new dialog
+					alertify.dialog('myAlert',function factory(){
+						return{
+							main:function(message){
+							this.message = message;
+						},
+						setup:function(){
+							return { 
+								focus: { element:0 }
+							};
+						},
+						prepare:function(){
+							this.setContent(this.message);
+						}
+					}});
+				}
+				
+				alertify.myAlert(btnHtm);
+			},
+			copyUrl : function(target){
+				var copyUrl = document.getElementById( 'copyUrl' );
+				copyUrl.select();
+				document.execCommand( 'Copy' );
+		        
+				$('.ajs-close').trigger("click");
+				alertify.success('<spring:message code="msg.common.success" />');
+			},
 			disabledCompleteRow : function(disabledBoolean){
 				var diabledNameList = ['prjName', 'osType', 'osTypeEtc', 'distributionType', 'networkServerType', 'distributeTarget', 'noticeType', 'noticeTypeEtc', 'priority', 'creatorNm', 'reviewer'];
 				diabledNameList.forEach(function(names){$('input[name='+names+'], select[name='+names+']').attr('disabled', disabledBoolean)});
@@ -1686,7 +1688,8 @@
 				if($('select[name=osType]').val() == null) {
 					$('select[name=osType]').val("").trigger('change');
 				}
-				
+
+				$('#editor').css("width", $(".miCase").width());
 				$('#editor').html(data.detail.comment);
 				$('select[name=category]').val(data.detail.category).trigger('change');
 				$('select[name=prjDivision]').val(data.detail.prjDivision).trigger('change');
@@ -1796,7 +1799,8 @@
 				if($('select[name=osType]').val() == null) {
 					$('select[name=osType]').val("").trigger('change');
 				}
-				
+
+				$('#editor').css("width", $(".miCase").width());
 				$('#editor').html(data.copy.comment);
 				$('textarea[name=comment]').val(data.copy.comment);
 				$('select[name=category]').val(data.copy.category).trigger('change');

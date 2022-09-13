@@ -101,7 +101,6 @@ public class CoConstDef {
 	public static final String CD_SYSTEM_SETTING = "909";
 	public static final String CD_LDAP_USED_FLAG = "910";
 	public static final String CD_SMTP_USED_FLAG = "911";
-	//	public static final String CD_MENU_AUTH_FLAG = "912";
 	public static final String CD_EXTERNAL_SERVICE_USED_FLAG = "940";
 	public static final String CD_EXTERNAL_ANALYSIS_USED_FLAG = "950";
 	public static final String CD_HIDE_EMAIL_FLAG = "960";
@@ -264,7 +263,7 @@ public class CoConstDef {
 	 */
 	/* dependency url pattern code */
 	public static final Pattern GITHUB_PATTERN = Pattern.compile("((http|https)://github.com/([^/]+)/([^/]+))");
-	public static final Pattern NPM_PATTERN = Pattern.compile("((http|https)://www.npmjs.com/package/([^/]+))");
+	public static final Pattern NPM_PATTERN = Pattern.compile("((http|https)://www.npmjs.(org|com)/package/([^/]+))");
 	public static final Pattern PYPI_PATTERN = Pattern.compile("((http|https)://pypi.org/project/([^/]+))");
 	public static final Pattern MAVEN_CENTRAL_PATTERN = Pattern.compile("((http|https)://mvnrepository.com/artifact/([^/]+)/([^/]+)(/([^/]+))?)");
 	public static final Pattern MAVEN_GOOGLE_PATTERN = Pattern.compile("((http|https)://maven.google.com/web/index.html#([^:]+):([^:]+)(:[^:]+)?)");
@@ -566,6 +565,8 @@ public class CoConstDef {
 	public static final String CD_MAIL_TYPE_PROJECT_DISTRIBUTE_EDIT_FILE = "670";
 	public static final String CD_MAIL_TYPE_PROJECT_DISTRIBUTE_REJECT = "68";
 	
+	/* Partner Binary DB Check*/
+	public static final String CD_MAIL_TYPE_PARTNER_BINARY_DATA_COMMIT = "470";
 	/** 3rd party reviewer changed */
 	public static final String CD_MAIL_TYPE_PARTER_REVIEWER_CHANGED = "70";
 	/** 3rd party reviewer changed */
@@ -618,6 +619,8 @@ public class CoConstDef {
 	public static final String CD_MAIL_COMPONENT_VULNERABILITY_PRJ = "207";
 	public static final String CD_MAIL_COMPONENT_VULNERABILITY_OSS = "208";
 	public static final String CD_MAIL_COMPONENT_PARTNER_OSSLIST = "209";
+
+	public static final String CD_MAIL_COMPONENT_PARTNER_DISCLOSEOSSINFO = "215";
 	public static final String CD_MAIL_COMPONENT_VULNERABILITY_RECALCULATED = "210";
 	public static final String CD_MAIL_COMPONENT_PACKAGING_REQUESTED_URL = "211";
 	public static final String CD_MAIL_COMPONENT_VULNERABILITY_PROJECT_RECALCULATED_ALL = "212";

@@ -4904,7 +4904,7 @@ public class ProjectServiceImpl extends CoTopComponent implements ProjectService
 			param.setPrjId(prjId);
 			Project beforeBean = getProjectDetail(param);
 			
-			if(!beforeBean.getDivision().equals(division)) {
+			if(!avoidNull(beforeBean.getDivision(), "").equals(division)) {
 				Project afterBean = getProjectDetail(param);
 				afterBean.setDivision(division);
 				
@@ -4942,5 +4942,55 @@ public class ProjectServiceImpl extends CoTopComponent implements ProjectService
 	@Override
 	public void updateComment(Project project) {
 		projectMapper.updateComment(project);
+	}
+
+	@Override
+	public String checkOssNicknameList(ProjectIdentification identification) {
+		String referenceDivString = "";
+		List<ProjectIdentification> bomList = projectMapper.selectBomList(identification);
+		
+		if(bomList != null) {
+			List<ProjectIdentification> checkList = bomList.stream()
+																.filter(obj -> {
+																	String ossName = (avoidNull(obj.getOssName())).toUpperCase();
+																	String compareOssName = (avoidNull(CoCodeManager.OSS_INFO_UPPER_NAMES.get(obj.getOssName().toUpperCase()))).toUpperCase();
+						
+																	return CoConstDef.FLAG_NO.equals(obj.getAdminCheckYn()) && !isEmpty(compareOssName) && !ossName.equals(compareOssName);
+																}).collect(Collectors.toList());
+			
+			if(checkList.size() > 0) {
+				for(ProjectIdentification row : checkList) {
+					if(CoCodeManager.OSS_INFO_UPPER_NAMES.containsKey(row.getOssName().toUpperCase())) {
+						switch(row.getReferenceDiv()) {
+						case CoConstDef.CD_DTL_COMPONENT_ID_PARTNER : 
+							if(!referenceDivString.contains("3rd")) {
+								referenceDivString += "3rd" + ","; 
+							}
+							break;
+						case CoConstDef.CD_DTL_COMPONENT_ID_SRC : 
+							if(!referenceDivString.contains("SRC")) {
+								referenceDivString += "SRC" + ","; 
+							}
+							break;
+						case CoConstDef.CD_DTL_COMPONENT_ID_BIN : 
+							if(!referenceDivString.contains("BIN")) {
+								referenceDivString += "BIN" + ","; 
+							}
+							break;
+						case CoConstDef.CD_DTL_COMPONENT_ID_ANDROID : 
+							if(!referenceDivString.contains("ANDROID")) {
+								referenceDivString += "ANDROID" + ","; 
+							}
+							break;
+						}
+					}
+				}
+				
+				referenceDivString = referenceDivString.substring(0, referenceDivString.length()-1);
+				return getMessage("msg.project.error.bom.usenickname", new String[]{referenceDivString});
+			}
+		}
+		
+		return null;
 	}
 }

@@ -141,7 +141,18 @@
 						</c:if>
 						<tr>
 							<th class="dCase"><spring:message code="msg.common.field.description" /></th>
-							<td class="dCase"><textarea class="w100P h150" id="description" name="description" ${confirmStatusDisabled}><c:if test="${not empty detail }">${detail.description }</c:if></textarea></td>
+							<td class="dCase">
+								<div class="grid-container">
+									<div class="grid-width-100">
+										<div id="editor4"><c:if test="${not empty detail }">${detail.description }</c:if></div>
+									</div>
+								</div>
+								<c:if test="${(detail.viewOnlyFlag ne 'Y') and (not empty detail.partnerId) }">
+									<div class="right mt5">
+										<input id="saveBtn" type='button' value='Save' class='btnCLight red right' style="margin-left:5px;" onclick="fn.editDescription();"/>
+									</div>
+								</c:if>
+							</td>
 						</tr>
 						<tr>
 							<th class="dCase"><spring:message code="msg.common.field.Agreement" /><br/><c:if test="${checkFlag}"><a href="javascript:void(0);" class="sampleDown" onclick="fn.sampleDownload('arg')"><span>Sample</span></a></c:if></th>
@@ -219,9 +230,11 @@
 							</td>
 						</tr>
 					</c:if>
+					</c:if>
 					<tr>
 						<th class="dCase"><spring:message code="msg.common.field.watcher" /></th>
 						<td class="dCase watchCase">
+							<c:if test="${detail.viewOnlyFlag ne 'Y'}">
 							<div class="pb5">
 								<span class="selectSet w150">
 									<strong for="userDivision" title="selected value">Select Division</strong>
@@ -274,25 +287,29 @@
 								<span><input type="text" id="listId" name="listId" style="width:350px" placeholder="Input ID you want to copy"/></span>
 								<input id="addList" type="button" value="+ Add" class="btnCLight gray" />
 							</div>
+							</c:if>
 							<div class="multiTxtSet2" id="nameSpace">
 							<c:forEach var="watcher" items="${detail.partnerWatcher }" varStatus="status">
 								<span>
 									<c:if test="${not empty watcher.userId}">
 									<input class="watcherTags" type="hidden" name="watchers" value='<c:if test="${ct:getConstDef('CD_USER_DIVISION_EMPTY') ne watcher.division}">${watcher.division}/</c:if>${watcher.userId}' />
 									<strong><c:if test="${ct:getConstDef('CD_USER_DIVISION_EMPTY') ne watcher.division}"><b <c:if test="${watcher.deptUseYn eq 'N'}">class="deleteUser"</c:if>>${ct:getCodeString(ct:getConstDef("CD_USER_DIVISION"),watcher.division)}</b>/</c:if><b <c:if test="${watcher.userUseYn eq 'N'}">class="deleteUser"</c:if>>${empty watcher.userName ? watcher.userId : watcher.userName}</b></strong>
+									<c:if test="${detail.viewOnlyFlag ne 'Y'}">
 									<input type="button" value="Delete" class="smallDelete" onclick="fn.removeWatcher('${watcher.division}','${watcher.userId}');"/>
+									</c:if>
 									</c:if>
 									<c:if test="${empty watcher.userId}">
 									<input class="watcherTags" type="hidden" name="watchers" value='${watcher.email}/Email' />
 									<strong>${watcher.email}</strong>
+									<c:if test="${detail.viewOnlyFlag ne 'Y'}">
 									<input type="button" value="Delete" class="smallDelete" onclick="fn.removeWatcher('${watcher.email}','Email');"/>
+									</c:if>
 									</c:if>
 								</span>
 							</c:forEach>
 							</div>
 						</td>
 					</tr>
-					</c:if>
 						<c:if test="${not empty detail.partnerId}">
 						<tr>
 							<th class="dCase txStr"><spring:message code="msg.common.field.creator" /></th>
@@ -343,6 +360,10 @@
 		<!---->
 		<div class="btnLayout">
             <span class="right">
+				<input id="copyUrl" type="text" style="width:1px; height:1px; margin:0; padding:0; border: 0;">
+				<c:if test="${not empty detail.partnerId}">
+					<input type="button" value="Share URL" class="btnColor red" onclick="fn.shareUrl();" />
+				</c:if>
                 <c:if test="${not empty detail.partnerId and detail.viewOnlyFlag ne 'Y'}">
                     <input type="button" value="Export" class="btnColor red btnExport" onclick="fn.downloadExcel()"/>
 					<input type="button" value="Yaml" class="btnColor red btnExport" onclick="fn.downloadYaml()"/
@@ -365,27 +386,6 @@
 			<table id="list"><tr><td></td></tr></table>
 			<div id="pager"></div>
 		</div>
-		<!---->
-		<div class="btnLayout">
-			<span class="right">
-				<c:if test="${not empty detail.partnerId and detail.viewOnlyFlag ne 'Y'}">
-					<input type="button" value="Export" class="btnColor red btnExport" onclick="fn.downloadExcel()"/>
-					<input type="button" value="Yaml" class="btnColor red btnExport" onclick="fn.downloadYaml()"/
-				</c:if>
-				<c:if test="${detail.status ne 'REQ' and detail.status ne 'CONF' and  (detail.loginUserRole eq 'ROLE_ADMIN'  or (detail.loginUserRole ne 'ROLE_ADMIN' and detail.status ne 'REV')) and detail.viewOnlyFlag ne 'Y'}">
-					<input type="button" value="Check OSS Name" onclick="fn.CheckOssViewPage('PARTNER')" class="btnColor red srcBtn" style="width: 115px;" />
-					<input type="button" value="Check License" onclick="fn.CheckOssLicenseViewPage('PARTNER')" class="btnColor red srcBtn" style="width: 100px;" />
-					<input id="partyReset" type="button" value="Reset" class="btnColor" onclick="fn.reset()"/>
-					<input id="partySave" type="button" value="Save" onclick="fn.save()" class="btnColor red" />
-				</c:if>
-			</span>
-			<span class="left">
-                <c:if test="${not empty detail and detail.status ne 'REQ' and detail.status ne 'CONF' and (detail.loginUserRole eq 'ROLE_ADMIN'  or (detail.loginUserRole ne 'ROLE_ADMIN' and detail.status ne 'REV')) and detail.viewOnlyFlag ne 'Y'}">
-	                <input id="partyDelete" type="button" value="Delete" class="btnColor red left" onclick="fn.delete()"/>
-	            </c:if>
-            </span>
-		</div>
-		<!---->
 	</div>
 	<!---->
 	<!-- BAT ************************************************************************************************************ -->
