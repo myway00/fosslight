@@ -1,7 +1,6 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ include file="/WEB-INF/constants.jsp"%>
-<%--<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-packaging.js?${jsVersion}"></script>--%>
-
+<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-project.js?${jsVersion}"></script>
 <script type="text/javascript">
 //<![CDATA[
 	/*global $ */
@@ -31,10 +30,6 @@
 		
 		showHelpLink("Project_List_Main");
 
-
-		//ㅊㄱ
-
-		//ㅊㄱ
 	});
 	
 	//데이터 객체
