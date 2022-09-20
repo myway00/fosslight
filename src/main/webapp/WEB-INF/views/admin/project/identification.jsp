@@ -885,4 +885,8 @@
 		<input type="button" value="Cancel" class="btnCancel btnColor" onclick="src_fn.closePop()">
 		<input type="button" value="OK" class="btnColor red sheetApply" onclick="src_fn.getSheetData()">
 	</div>
+<<<<<<< HEAD
 </div>
+=======
+</div>
+>>>>>>> 1e0fdeb54928886882eb991d5e9c08468bf93bea
