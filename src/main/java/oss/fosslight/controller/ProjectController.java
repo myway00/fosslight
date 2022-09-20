@@ -1173,6 +1173,12 @@ public class ProjectController extends CoTopComponent {
 		if (!isNew) {
 			try {
 				String mailType = "true".equals(copy)?CoConstDef.CD_MAIL_TYPE_PROJECT_COPIED:CoConstDef.CD_MAIL_TYPE_PROJECT_CHANGED;
+				String diffDivisionComment = "";
+				
+				if(CoConstDef.CD_MAIL_TYPE_PROJECT_CHANGED.equals(mailType) && !beforeBean.getDivision().equals(afterBean.getDivision())){
+					diffDivisionComment = CommonFunction.getDiffItemComment(beforeBean, afterBean);
+				}
+				
 				CoMail mailBean = new CoMail(mailType);
 				mailBean.setParamPrjId(project.getPrjId());
 				mailBean.setCompareDataBefore(beforeBean);
@@ -1187,10 +1193,11 @@ public class ProjectController extends CoTopComponent {
 				CoMailManager.getInstance().sendMail(mailBean);
 				
 				if(CoConstDef.CD_MAIL_TYPE_PROJECT_CHANGED.equals(mailType)){
+					String diffItemComment = CommonFunction.getDiffItemComment(beforeBean, afterBean, true);
+					
 					try {
-						String diffItemComment = CommonFunction.getDiffItemComment(beforeBean, afterBean);
-						
-						if(!isEmpty(diffItemComment)) {
+						if(!isEmpty(diffItemComment) || !isEmpty(diffDivisionComment)) {
+							diffItemComment += diffDivisionComment;
 							CommentsHistory commHisBean = new CommentsHistory();
 							commHisBean.setReferenceDiv(CoConstDef.CD_DTL_COMMENT_PROJECT_HIS);
 							commHisBean.setReferenceId(project.getPrjId());
@@ -2843,6 +2850,7 @@ public class ProjectController extends CoTopComponent {
 		String partyGrid = (String) map.get("partyGrid");
 		String srcMainGrid = (String) map.get("srcMainGrid");
 		String binMainGrid = (String) map.get("binMainGrid");
+		String status = (String) map.get("status");
 
 		// party
 		Type partyType = new TypeToken<List<ProjectIdentification>>() {}.getType();
@@ -2883,6 +2891,17 @@ public class ProjectController extends CoTopComponent {
 			return makeJsonResponseHeader(false, errMsg);
 		}
 
+		if(!isEmpty(status) && CoConstDef.CD_DTL_IDENTIFICATION_STATUS_CONFIRM.equals(status.toUpperCase())){
+			ProjectIdentification identification = new ProjectIdentification();
+			identification.setReferenceId(prjId);
+			identification.setReferenceDiv(CoConstDef.CD_DTL_COMPONENT_ID_BOM);
+			identification.setMerge(CoConstDef.FLAG_YES);
+			errMsg = projectService.checkOssNicknameList(identification);
+			if (!isEmpty(errMsg)) {
+				return makeJsonResponseHeader(false, errMsg);
+			}
+		}
+		
 		return makeJsonResponseHeader();
 	}
 	
@@ -4201,38 +4220,54 @@ public class ProjectController extends CoTopComponent {
 	@PostMapping(value=PROJECT.PROJECT_DIVISION)
 	public @ResponseBody ResponseEntity<Object> updateProjectDivision(@RequestBody Project project, HttpServletRequest req,
 			HttpServletResponse res, Model model) {
-		Map<String, List<Project>> updatePrjDivision = projectService.updateProjectDivision(project);
+		List<String> permissionCheckList = null;
 		
-		if(updatePrjDivision.containsKey("before") && updatePrjDivision.containsKey("after")) {
-			List<Project> beforePrjList = (List<Project>) updatePrjDivision.get("before");
-			List<Project> afterPrjList = (List<Project>) updatePrjDivision.get("after");
+		if(!CommonFunction.isAdmin()) {
+			CommonFunction.setProjectService(projectService);
+			permissionCheckList = CommonFunction.checkUserPermissions(loginUserName(), project.getPrjIds(), "project");
+		}
+		
+		if(permissionCheckList == null || permissionCheckList.isEmpty()){
+			Map<String, List<Project>> updatePrjDivision = projectService.updateProjectDivision(project);
 			
-			if((beforePrjList != null && !beforePrjList.isEmpty()) 
-					&& (afterPrjList != null && !afterPrjList.isEmpty())
-					&& beforePrjList.size() == afterPrjList.size()) {
+			if(updatePrjDivision.containsKey("before") && updatePrjDivision.containsKey("after")) {
+				List<Project> beforePrjList = (List<Project>) updatePrjDivision.get("before");
+				List<Project> afterPrjList = (List<Project>) updatePrjDivision.get("after");
 				
-				for(int i=0; i<beforePrjList.size(); i++) {
-					try {
-						CommentsHistory commentsHistory = new CommentsHistory();
-						commentsHistory.setReferenceDiv(CoConstDef.CD_DTL_COMMENT_PROJECT_HIS);
-						commentsHistory.setReferenceId(afterPrjList.get(i).getPrjId());
-						commentsHistory.setContents(afterPrjList.get(i).getUserComment());
-						
-						commentService.registComment(commentsHistory, false);
-						
-						String mailType = CoConstDef.CD_MAIL_TYPE_PROJECT_CHANGED;
-						CoMail mailBean = new CoMail(mailType);
-						mailBean.setParamPrjId(afterPrjList.get(i).getPrjId());
-						mailBean.setCompareDataBefore(beforePrjList.get(i));
-						mailBean.setCompareDataAfter(afterPrjList.get(i));
-						mailBean.setToIdsCheckDivision(true);
-						
-						CoMailManager.getInstance().sendMail(mailBean);
-					} catch(Exception e) {
-						log.error(e.getMessage(), e);
+				if((beforePrjList != null && !beforePrjList.isEmpty()) 
+						&& (afterPrjList != null && !afterPrjList.isEmpty())
+						&& beforePrjList.size() == afterPrjList.size()) {
+					
+					for(int i=0; i<beforePrjList.size(); i++) {
+						try {
+							String mailType = CoConstDef.CD_MAIL_TYPE_PROJECT_CHANGED;
+							CoMail mailBean = new CoMail(mailType);
+							mailBean.setParamPrjId(afterPrjList.get(i).getPrjId());
+							mailBean.setCompareDataBefore(beforePrjList.get(i));
+							mailBean.setCompareDataAfter(afterPrjList.get(i));
+							mailBean.setToIdsCheckDivision(true);
+							
+							CoMailManager.getInstance().sendMail(mailBean);
+							
+							try {
+								CommentsHistory commentsHistory = new CommentsHistory();
+								commentsHistory.setReferenceDiv(CoConstDef.CD_DTL_COMMENT_PROJECT_HIS);
+								commentsHistory.setReferenceId(afterPrjList.get(i).getPrjId());
+								commentsHistory.setContents(afterPrjList.get(i).getUserComment());
+								commentsHistory.setStatus("Changed");
+								
+								commentService.registComment(commentsHistory, false);
+							} catch (Exception e) {
+								log.error(e.getMessage(), e);
+							}
+						} catch(Exception e) {
+							log.error(e.getMessage(), e);
+						}
 					}
 				}
 			}
+		} else {
+			return makeJsonResponseHeader(false, null, permissionCheckList);
 		}
 		
 		return makeJsonResponseHeader();

@@ -57,7 +57,7 @@
 					cache : false,
 					data : {prjId : prjId},
 					success : function(detailResult){
-						$("#divViewMode").html(detailResult);
+						$("#divViewMode").html(replaceWithLink(detailResult));
 						$("#divViewMode").show();
 						$("#divEditMode").hide();
 					},
@@ -143,7 +143,7 @@
 		// 저장
 		saveSubmit : function(){
 			var editorVal = CKEDITOR.instances.editor.getData();
-			$('input[name=comment]').val(editorVal);
+			$('input[name=comment]').val(replaceWithLink(editorVal));
 			
 			$("#projectForm").ajaxForm({
 				url : '<c:url value="/selfCheck/saveAjax"/>',
@@ -894,7 +894,7 @@
 			var srcList = $("#srcList");
 			
 			// 그리드 리셋 버튼
-			$("#srcReset, #srcResetUp").click(function(e){
+			$("#srcResetUp").click(function(e){
 	 			e.preventDefault();
 	 			
 				alertify.confirm('<spring:message code="msg.common.confirm.reset" />', function (e) {
@@ -907,7 +907,7 @@
 			});
 			
 			// 그리드 저장 버튼
-			$("#srcSave, #srcSaveUp").click(function(e){
+			$("#srcSaveUp").click(function(e){
 				e.preventDefault();
 				
 				src_fn.saveAjax();

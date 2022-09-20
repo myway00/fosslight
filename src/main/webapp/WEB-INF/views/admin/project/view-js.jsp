@@ -19,6 +19,13 @@
 	
 	$(document).ready(function() {
 		'use strict';
+        if('${project.viewOnlyFlag}' == 'N') {
+            var copyUrl = "";
+            var protocol = window.location.protocol;
+            var host =  window.location.host;
+            copyUrl = protocol + "//" + host + "/index?id=" + '${project.prjId}' + "&project=true";
+            window.location.href = copyUrl;
+        }
 		
 	<c:if test="${empty message}">
 		//initSample();
@@ -114,7 +121,6 @@
 			var rlt = division+((userId!="") ? "/"+userId : "");
 			var html  = '<span><input class="watcherTags" type="text" name="watchers" value="'+rlt+'" style="display: none;"/>';
 			html += '<strong>'+str+'</strong></span>';
-			//html +='<input type="button" value="Delete" class="smallDelete" onclick="fn.removeWatcher(\''+division+'\',\''+userId+'\');" /></span>';
 
 			target.append(html);
 

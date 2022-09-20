@@ -1043,17 +1043,15 @@ public class T2CoProjectValidator extends T2CoValidator {
 		}
 
 		List<String> checkOssNameUrl = CoCodeManager.getCodeNames(CoConstDef.CD_CHECK_OSS_NAME_URL);
+		boolean splitFlag = false;
 		
 		for(String checkVal : splitCheckVal) {
-			if(checkVal.contains(";")) {
-				checkVal = checkVal.split(";")[0];
-			}
-			
 			checkVal = linkPatternCompile(checkOssNameUrl, checkVal);
+			splitFlag = checkVal.split("//").length == 2 ? true : false;
 			
 			if (!isEmpty(getData) && !kind.equals("DOWNLOAD")) {
 				if(kind.equals("HOMEPAGE")) {
-					if(checkVal.startsWith("http://") || checkVal.startsWith("https://")) {
+					if((checkVal.startsWith("http://") || checkVal.startsWith("https://")) && splitFlag) {
 						checkVal = checkVal.split("//")[1];
 					}
 					
@@ -1076,13 +1074,13 @@ public class T2CoProjectValidator extends T2CoValidator {
 					}
 				}
 				
-				if(!getData.equals(checkVal)) {
+				if(!getData.toUpperCase().equals(checkVal.toUpperCase())) {
 					return true;
 				}
 			}
 			
 			if(kind.equals("DOWNLOAD") && !isEmpty(getData2)){
-				if(checkVal.startsWith("http://") || checkVal.startsWith("https://")) {
+				if((checkVal.startsWith("http://") || checkVal.startsWith("https://")) && splitFlag) {
 					checkVal = checkVal.split("//")[1];
 				}
 				
@@ -1103,7 +1101,7 @@ public class T2CoProjectValidator extends T2CoValidator {
 						downloadLocation = downloadLocation.substring(5, downloadLocation.length());
 					}
 					
-					if(downloadLocation.equals(checkVal)) {
+					if(downloadLocation.toUpperCase().equals(checkVal.toUpperCase())) {
 						chkFlag = true;
 						break;
 					}
@@ -1113,7 +1111,7 @@ public class T2CoProjectValidator extends T2CoValidator {
 					return true;
 				}
 			}else if(kind.equals("DOWNLOAD") && !isEmpty(getData) && isEmpty(getData2)){
-				if(checkVal.startsWith("http://") || checkVal.startsWith("https://")) {
+				if((checkVal.startsWith("http://") || checkVal.startsWith("https://")) && splitFlag) {
 					checkVal = checkVal.split("//")[1];
 				}
 				
@@ -1131,7 +1129,7 @@ public class T2CoProjectValidator extends T2CoValidator {
 					getData = getData.substring(5, getData.length());
 				}
 				
-				if(!getData.equals(checkVal)) {
+				if(!getData.toUpperCase().equals(checkVal.toUpperCase())) {
 					return true;
 				}
 			}
@@ -1187,10 +1185,11 @@ public class T2CoProjectValidator extends T2CoValidator {
 				
 					break;
 				case 1: // npm
+				case 6: // npm
 					if(checkVal.contains("/package/@")) {
-						p = Pattern.compile("((http|https)://www.npmjs.com/package/([^/]+)/([^/]+))");
+						p = Pattern.compile("((http|https)://www.npmjs.(org|com)/package/([^/]+)/([^/]+))");
 					}else {
-						p = Pattern.compile("((http|https)://www.npmjs.com/package/([^/]+))");
+						p = Pattern.compile("((http|https)://www.npmjs.(org|com)/package/([^/]+))");
 					}
 				
 					break;
@@ -1200,15 +1199,12 @@ public class T2CoProjectValidator extends T2CoValidator {
 					break;
 				case 3: // maven
 					p = Pattern.compile("((http|https)://mvnrepository.com/artifact/([^/]+)/([^/]+))");
-
-				break;
+					break;
 				case 4: // pub
 					p = Pattern.compile("((http|https)://pub.dev/packages/([^/]+))");
-
 					break;
 				case 5: // cocoapods
 					p = Pattern.compile("((http|https)://cocoapods.org/pods/([^/]+))");
-
 					break;
 				default:
 					break;

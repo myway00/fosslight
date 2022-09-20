@@ -2,6 +2,7 @@
 <%@ include file="/WEB-INF/constants.jsp"%>
 <!-- wrap -->
 <div id="wrapIframe">
+<c:if test="${project.viewOnlyFlag eq 'Y'}">
 	<c:if test="${not empty project.prjId}">
 		<div class="projdecTop">
 			<div class="projectInfo">
@@ -169,14 +170,12 @@
 								<th class="dCase">Additional Information</th>
 								<td class="dCase">${project.comment}</td>
 							</tr>
-							<c:if test="${project.viewOnlyFlag ne 'Y'}">
 							<tr>
 								<th class="dCase">Watcher</th>
 								<td class="dCase">
 									<div id="multiDiv" class="multiTxtSet2"></div>
 								</td>
 							</tr>
-							</c:if>
 							<c:if test="${ct:isAdmin() and not empty project.prjId and 'Y' ne project.copyFlag}">
 
 							</c:if>
@@ -209,6 +208,7 @@
 	<c:if test="${not empty message}">
 		${message}
 	</c:if>
+</c:if>
 	<!---->
 </div>
 <!-- //wrap -->

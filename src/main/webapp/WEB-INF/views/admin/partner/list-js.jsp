@@ -62,6 +62,9 @@
 	}
 	
 	var fn = {
+		unformatter : function(cellvalue, options, rowObject){
+			return cellvalue;
+		},
 		downloadExcel : function(){
 			if(isMaximumRowCheck(totalRow)){
 				var data = $('#3rdSearch').serializeObject();
@@ -106,7 +109,9 @@
 			var display = "";
 			
 			if(cellvalue !="" && cellvalue != undefined){
-				display ="<div style=\"height : 29px; overflow: hidden;\">"+cellvalue+"</div>";
+				var tmpStr = new RegExp();
+				tmpStr = /[<][^>]*[>]/gi;
+				display ="<div style=\"height : 29px; overflow: hidden;\">"+cellvalue.replace(tmpStr , "")+"</div>";
 			}
 			
 			return display;
@@ -221,15 +226,15 @@
 			var chk = $("#list").jqGrid("getGridParam", "selarrrow").length;
 
 			if(chk > 0){
-				$("#changeDivisionSelect").find("strong").text($("#changeDivisionPop select[name=division] option:first").text());
-				$("#changeDivisionPop").show();
+				$("#partnerChangeDivisionSelect").find("strong").text($("#partnerChangeDivisionSelect select[name='partnerDivision'] option:first").text());
+				$("#partnerChangeDivisionPop").show();
 			} else {
 				alertify.alert('<spring:message code="msg.project.watcher.selectlist" />', function(){});
 			}
 		}, 
 		changeDivisionSave : function(){
 			var changeDivisionArr = $("#list").jqGrid("getGridParam", "selarrrow");
-			var division = $("#changeDivisionPop select[name=division]").val();
+			var division = $("#partnerChangeDivisionPop select[name=partnerDivision]").val();
 
 			alertify.confirm('<spring:message code="msg.common.change.division" />', function (e) {
 				if (e) {
@@ -241,10 +246,27 @@
 						data: JSON.stringify({'partnerIds':changeDivisionArr, 'parDivision':division}),
 						contentType : 'application/json',
 						success: function (data) {
-							alertify.alert('<spring:message code="msg.common.success" />', function(){
-								reloadTabInframe('<c:url value="/partner/list"/>');
-								activeTabInFrameList("PARTNER");
-							});
+							if("true" == data.isValid){
+								alertify.alert('<spring:message code="msg.common.success" />', function(){
+									reloadTabInframe('<c:url value="/partner/list"/>');
+									activeTabInFrameList("PARTNER");
+								});
+							} else {
+								var list = [];
+								list = data.resultData;
+								
+								var msg = '<spring:message code="msg.partner.check.division.permissions" />';
+								msg += '<br/> - '
+
+								for(var i=0; i<list.length; i++){
+									msg += '3rd-' + list[i];
+									if(i < list.length - 1){
+										msg += ', ';
+									}
+								}
+								
+								alertify.alert(msg, function(){});
+							}
 						},
 						error : function(){
 							alertify.error('<spring:message code="msg.common.valid2" />', 0);
@@ -256,8 +278,8 @@
 			});
 		}, 
 		changeDivisionCancel : function(){
-			$("#changeDivisionPop select[name=division] option").remove();
-			$('#changeDivisionPop').hide();
+			$("#partnerChangeDivisionPop select[name=division] option").remove();
+			$('#partnerChangeDivisionPop').hide();
 		}
 	}
 	
@@ -317,7 +339,7 @@
 					{name: 'softwareVersion', index: 'softwareVersion', width: 40, align: 'left', sortable : true, hidden:true},
 					{name: 'status', index: 'status', width: 50, align: 'center', formatter: fn.displayStatus, sortable : true},
 					{name: 'deliveryForm', index: 'deliveryForm', width: 50, align: 'center', formatter: fn.displayDeliveryForm, sortable : true},
-					{name: 'description', index: 'description', width: 100, align: 'left', sortable : true},
+					{name: 'description', index: 'description', width: 100, align: 'left', sortable : true, formatter:fn.displayComment, unformatter:fn.unformatter},
 					{name: 'cveId', index: 'cveId', hidden:true},
 					{name: 'cvssScore', index: 'cvssScore', width: 50, align: 'center', formatter:fn.displayVulnerability, unformatter:fn.unformatter, sortable : false},
 					{name: 'division', index: 'division', width: 100, align: 'left', sortable : true},

@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ include file="/WEB-INF/constants.jsp"%>
+<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-packaging.js?${jsVersion}"></script>
 <!-- wrap -->
 <div id="wrapIframe">
 	<!---->
@@ -19,8 +20,8 @@
 					</dd>
 					<dd class="lastAign">
 						<label>Created Date</label>
-						<input name="schStartDate" id="schStartDate" type="text" class="cal" title="Search Start Date" value="${searchBean.schStartDate}" maxlength="8" autocomplete="off" style="width:77px;"/> ~ 
-						<input name="schEndDate" id="schEndDate" type="text" class="cal" title="Search End Date" value="${searchBean.schEndDate}" maxlength="8" autocomplete="off" style="width:77px;"/> 
+						<input name="schStartDate" id="schStartDate" type="text" class="cal" title="Search Start Date" value="${searchBean.schStartDate}" maxlength="8" autocomplete="off" style="width:77px;"/> ~
+						<input name="schEndDate" id="schEndDate" type="text" class="cal" title="Search End Date" value="${searchBean.schEndDate}" maxlength="8" autocomplete="off" style="width:77px;"/>
 					</dd>
 					<dd>
 						<label>Division</label>
@@ -30,7 +31,7 @@
 								<option value=""></option>
 								${ct:genOption(ct:getConstDef("CD_USER_DIVISION"))}
 							</select>
-						</span>						
+						</span>
 					</dd>
 					<dd class="centerAign">
 						<label>Creator</label>
@@ -108,7 +109,7 @@
 					</dd>
 					<dd class="centerAign w600">
 						<label>Comment</label>
-						<textarea name="userComment" style="margin: 0px; width: 180px; height: 54px;">${searchBean.userComment}</textarea>					
+						<textarea name="userComment" style="margin: 0px; width: 180px; height: 54px;">${searchBean.userComment}</textarea>
 					</dd>
 						<dd>
 							<label>Binary Name</label>
@@ -126,10 +127,11 @@
 				<a class="right" id="helpLink" style="position:absolute; cursor: pointer; top:10px; right:-60px; display:none;"><img alt="" src="${ctxPath}/images/user-guide.png" /></a>
 			</form>
 		</fieldset>
+		<input type="button" value=" 📢 Continue Tutorial " id="continue_tutorial" />
 		<!---->
 		<div class="btnLayout">
 			<input type="button" value="Reject" class="btnReject btnColor left" style="display: none;"/>
-			
+
 			<!-- Popup -->
 			<div id="changeStatusPop" class="pop changeStatusPop">
 				<h1 class="orange">Change Status</h1>
@@ -158,7 +160,7 @@
 				</div>
 			</div>
 			<!-- //Popup -->
-			
+
 			<!-- Popup -->
 			<div id="changeDivisionPop" class="pop changeDivisionPop">
 				<h1 class="orange">Change Division</h1>
@@ -170,7 +172,7 @@
 							<select name="division">
 								${ct:genOption(ct:getConstDef("CD_USER_DIVISION"))}
 							</select>
-						</span>	
+						</span>
 					</div>
 				</div>
 				<div class="pbtn">
@@ -179,21 +181,26 @@
 				</div>
 			</div>
 			<!-- //Popup -->
-			
+
 			<span class="left">
 				<input id="copy" type="button" value="Copy" class="btnColor" onclick="fn.copy();"/>
 				<input id="changeStatus" type="button" value="Change Status" class="btnColor w120" onclick="fn.checkProjectStatus();"/>
 				<input type="button" value="BOM Compare" class="btnColor blue w120" onclick="fn.bomCompare();" />
 				<input type="button" value="Change Division" class="btnColor w120" onclick="fn.changeDivision();" />
 			</span>
-			
+
 			<span class="right">
 				<a href="#none" class="btnSet excel" onclick="fn.downloadExcel()"><span>Export</span></a>
-				<input type="button" value="Add" class="btnColor btnAdd" onclick="createTabInFrame('New_Project', '#<c:url value="/project/edit"/>')" />
+				<input type="button" value="Add" id="btn_project_add" class="btnColor btnAdd" onclick="createTabInFrame('New_Project', '#<c:url value="/project/edit"/>')" />
 			</span>
+
+			<span class="left" id=identification_start>
+			</span>
+
+
 		</div>
 		<!---->
-		<div class="jqGridSet">
+		<div class="jqGridSet" id="check_create">
 			<table id="list"><tr><td></td></tr></table>
 			<div id="pager"></div>
 		</div>
@@ -205,15 +212,16 @@
 				<input type="button" value="BOM Compare" class="btnColor blue w120" onclick="fn.bomCompare();" />
 				<input type="button" value="Change Division" class="btnColor w120" onclick="fn.changeDivision();" />
 			</span>
-		
+
 			<input type="button" value="Reject" class="btnReject btnColor left" />
 			<span class="right">
 				<a href="#none" class="btnSet excel" onclick="fn.downloadExcel()"><span>Export</span></a>
 				<input type="button" value="Add" class="btnColor btnAdd" onclick="createTabInFrame('New_Project', '#<c:url value="/project/edit"/>')" />
 			</span>
 		</div>
+		<button id='continue_tutorial_25'>Continue tutorial (packaging)</button>
 		<!---->
 	</div>
 	<!---->
 </div>
-<!-- //wrap --> 
+<!-- //wrap -->

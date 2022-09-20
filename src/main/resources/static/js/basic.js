@@ -1,6 +1,7 @@
 var lastTab = -1;	//이전 탭 기억변수
 var selectTab = -1;	//현재 탭 기억변수
 var deleteFlag = false;
+var LINKREGEXP = /PRJ-\d+(?!.*\<\/a\>)|3rd-\d+(?!.*\<\/a\>)/gi;
 
 $( document ).ajaxSend(function( event, jqxhr, settings ) {
   jqxhr.setRequestHeader("AJAX", true);
@@ -30,39 +31,39 @@ $(document).ready(function (){
 		if(e.keyCode===82 && e.altKey && !e.shiftKey){//Alt + R - 이전 탭으로 가기
 			returnTabInFrame();
 		}
-		
+
 		if(e.keyCode===87 && e.altKey && !e.shiftKey){//Alt + W - 현재 탭 닫기
 			activeDeleteTabInFrame();
 		}
-		
+
 		if(e.altKey && e.shiftKey && e.keyCode===87){//Shift + Alt + W - 전체 탭 닫기
 			allDeleteTabInFrame();
 		}
-		
+
 		if(e.keyCode===37 && e.shiftKey && e.altKey){//Shift + Alt + Arrow Left - 탭 왼쪽으로 이동
 			changeTabInFrame('left');
 		}
-		
+
 		if(e.keyCode===39 && e.shiftKey && e.altKey){//Shift + Alt + Arrow Right - 탭 오른쪽으로 이동
 			changeTabInFrame('right');
 		}
 	});
 	$(window).ajaxStart(function(event, jqxhr, settings){
 		var _targetUrl = event.target.URL;
-		
+
 		if(_targetUrl && "function" != typeof(_targetUrl)) {
 			loading.show();
-			
+
 			onAjaxLoadingHide = false;
 		}
 	}).ajaxStop(function(){
 		loading.hide();
 	}).ajaxError(function(event, jqxhr, ssettings, exception) {
 		doNotUseAutoLoadingHideFlag = "N";
-		
+
 		loading.hide();
 	});
-	
+
 	$('.headerHandle').click(function(){
 		$('#wrapBack').toggleClass('headerHide');
 	});
@@ -88,55 +89,63 @@ $(document).ready(function (){
 	}); // 달력
 
 	var select = $(".selectSet select");
-	
+
 	select.change(function(){
 		var select_name = $(this).children("option:selected").text();
 		$(this).siblings("strong").text(select_name);
 	});
-	
+
 	for (i=0; i<$(".selectSet select").length; i++){
 		var select_ = $(".selectSet select").get(i);
 		if($(select_).is(":disabled")) $(select_).siblings('strong').css('opacity','0.5');
 	} // select disabled opacity
-	
+
 	$("#btnRejectNotice").click(function() {
 		if(projectStatus == "COMP") {
 			alertify.warning('If you need to modify, please click a "request to open" button in the basic information tab of the project.');
 		} else {
 			alertify.warning('If you need modify, please leave a comment on FOSSLight team.');
 		}
-		
+
 		return false;
 	});
 
 	function initTab(){
-		var _defaultTabStr = $("#defaultTabAnchorArr").val()||"";
-				
-		$.each(_defaultTabStr.split(","), function(idx, val){
-			var _gnbHref = $("#header > div > div.gnb a[href$='"+val+"']");
-			
-			if(_gnbHref && _gnbHref.length == 1) {
-				$("#header > div > div.gnb a[href$='"+val+"']").trigger("click");
-			}
-		});
+		var query = window.location.search;
+		var param = new URLSearchParams(query);
+		var id = param.get("id");
+		var prjFlag = param.get("project");
+		if(id != null && prjFlag != null) {
+			createTab(prjFlag == 'true' ? id + "_Project" : id + "_3rdParty",prjFlag == 'true' ? "#/project/edit/" + id : "#/partner/edit/" + id);
+		} else {
+			var _defaultTabStr = $("#defaultTabAnchorArr").val()||"";
+
+			$.each(_defaultTabStr.split(","), function(idx, val){
+				var _gnbHref = $("#header > div > div.gnb a[href$='"+val+"']");
+
+				if(_gnbHref && _gnbHref.length == 1) {
+					$("#header > div > div.gnb a[href$='"+val+"']").trigger("click");
+				}
+			});
+		}
 	}
-	
+
 	function tabExitHide(){
 		var $tabs = $('#nav-tabs').tabs();
 		var tab_length = $tabs.find('.nav-tab-menu li span').length;
-		
+
 		if(tab_length <= 2){
 			$tabs.find('.nav-tab-menu li input').hide();
 		} else {
 			$tabs.find('.nav-tab-menu li input').show();
 		}
 	}
-	
+
 	/* Create new tab function */
 	$(function newTab() {
 		//initTab();
 		var $tabs = $('#nav-tabs').tabs();
-		
+
 		$('.add-tab').click(function (e) {
 			e.preventDefault();
 		    $tabs.find( ".ui-tabs-nav" ).sortable({
@@ -145,39 +154,39 @@ $(document).ready(function (){
 		        $tabs.tabs( "refresh" );
 		      }
 		    });
-		    
+
 			var tabName = $(this).text(),
 				tabLink = $(this).attr('href'),
 				tabAnchor = $(this).attr('href').replace(/#/g, ''),
 				tabNumber = -1;
-			
+
 			//2018-08-16 choye 추가
 			var aTitle = $(this).attr('title');
-			
+
 			if(aTitle!=null && aTitle!="" && aTitle!=undefined){
 				tabName = aTitle;
 			}
-			
+
 			var tab_length = $tabs.find('.nav-tab-menu li span').length;
 
 			if(tabLink.indexOf("?") != -1){
 				var tmp = tabLink.split('?');
-				
+
 				tabLink = tmp[0];
 			}
-			
+
 			if(tabAnchor.indexOf("?") != -1){
 				var tmp = tabAnchor.split('?');
-				
+
 				tabAnchor = tmp[0];
 			}
-			
+
 			$tabs.find('.nav-tab-menu li span').each(function (i) {
 				if ($(this).text() == tabName) {
 					tabNumber = i;
 				}
 			});
-			
+
 			if (tabNumber >= 0) {
 				$tabs.tabs('option', 'active', tabNumber-1);
 				reloadTab(tabAnchor,"create");
@@ -190,25 +199,25 @@ $(document).ready(function (){
 					.appendTo(".nav-tab-menu");
 				$("#nav-tabs").tabs("refresh");
 				$('#nav-tabs').tabs('option', 'active', -1);
-				
+
 				lastTab = selectTab;
-				
+
 				selectTab = $("#nav-tabs").tabs('option','active');
-			}	
-			
+			}
+
 			// 화면갱신
 			viewRefresh();
-			
+
 			return false;
 		});
-		
+
 		initTab();
 	});
-	
+
 	/* Delete tab function */
 	$(document).on('click', '.ui-icon-close', function (event) {
 		viewRefresh();
-		
+
 		var parent = $(this).parent(),
 			index = parent.index(),
 			tabs = $(this).closest(".ui-tabs"),
@@ -217,31 +226,31 @@ $(document).ready(function (){
 			$(tabLink).remove();
 			parent.remove();
 			panel.remove();
-			
+
 		if(lastTab > selectTab) lastTab--;
-			
+
 		$("#nav-tabs").tabs("refresh").tabs('option', 'active', lastTab > -1 ? lastTab : 0 );
-		
+
 		selectTab = lastTab;
 	});
-	
+
 	/* tab click event */
 	$(document).on('click', '.ui-tabs-anchor', function(event) {
 		lastTab = selectTab;
 		selectTab = $("#nav-tabs").tabs('option','active');
-		
+
 		viewRefresh();
 	});
-	
-	
+
+
 	$(window).bind('resize', function() {
 		// 브라우저 창 크기에 따라 jqGrid Width 자동 조절
 		tableRefresh();
-		
+
 		// 화면갱신
 		viewRefresh();
 	}).trigger('resize');
-	
+
 	$( ".commentBtn").click(function() {
 		$( this ).toggleClass( "open" );
 		$('.commentEditor').toggle();
@@ -252,7 +261,7 @@ $(document).ready(function (){
 		$( this ).toggleClass( "on" );
 		$('.adminSearch').toggle();
 	});
-	
+
 	$( ".btnHiddenExpand").click(function() {
 		$( this ).toggleClass( "on" );
 		$('.hiddenSearch').toggle();
@@ -262,7 +271,7 @@ $(document).ready(function (){
 		$( this ).toggleClass( "on" );
 		$('.editSearchUp, .threeRdSearch').toggle();
 	});
-	
+
 	(function($){
 		//form data -> json data
 		$.fn.serializeObject = function() {
@@ -272,7 +281,7 @@ $(document).ready(function (){
 				var node = result[element.name];
 				// If node with same name exists already, need to convert it to an array as it
 				// is a multi-value field (i.e., checkboxes)
-				
+
 				var isArrObject = "watchers" == element.name;
 
 				if ('undefined' !== typeof node && node !== null) {
@@ -284,35 +293,35 @@ $(document).ready(function (){
 				} else {
 					if(isArrObject) {
 						node = [element.value];
-						
+
 						result[element.name] = node;
 					} else {
 						result[element.name] = element.value;
 					}
 				}
 			};
-			
+
 			$.each(this.serializeArray(), extend);
-			
+
 			return result;
 		}
-		
+
 		//create combobox by code
 		$.fn.makeSelectByCodes = function(typeCodes){
 			"use strict";
 			var $this = this;
-			
+
 			typeCodes.forEach(function(typeCode){
 				$('<option value="'+typeCode.cdDtlNo+'">'+typeCode.cdDtlNm+'</option>').appendTo($this);
 			});
 		}
-		
+
 		//element value check
 		$.fn.isValueEmpty = function(){
-			return this.val() == null || this.val() == ''; 
+			return this.val() == null || this.val() == '';
 		}
 	}(jQuery));
-	
+
 	autoComplete.load();
 	autoComplete.init();
 });
@@ -321,7 +330,7 @@ var loading = {
 		show: function(){
 			if($('#loading_wrap').css("display") == "none" && !onAjaxLoadingHide){
 				$('#loading_wrap').show();
-			}	
+			}
 		},
 		hide: function(){
 			if("Y" != doNotUseAutoLoadingHideFlag) {
@@ -333,35 +342,35 @@ var loading = {
 /* iFrame에서 호출 (보안문제로 broadcast하여 호출) */
 function receiveMessage(event) {
 	var data = JSON.parse(event.data);
-	
+
 	switch(data.action){
 		case 'create':
 			createTab(data.tabData[0], data.tabData[1]);
-			
+
 			break;
 		case 'delete':
 			deleteTab(data.tabData[0]);
-			
+
 			break;
 		case 'activeDelete':
 			activeDeleteTab();
-			
+
 			break;
 		case 'allDelete':
 			allDeleteTab();
-			
+
 			break;
 		case 'return':
 			returnTab();
-			
+
 			break;
 		case 'reload':
 			reloadTab(data.tabData[0],data.action);
-			
+
 			break;
 		case 'change':
 			changeTab(data.tabData[0]);
-			
+
 			break;
 	}
 }
@@ -379,19 +388,19 @@ function createTabInFrame(tabNm, tabLk){
 		tabData:tabData,
 		action:'create'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
-	
+
 }
 function createTabInFrameWithCondition(tabNm, tabLk, sesKey, sesVal){
 	$.ajax({	type: 'GET',url:'/sessionKeyValSave/'+sesKey+'/'+sesVal,async:false,data:{'sesKey':sesKey, 'sesVal':sesVal},headers: {'Content-Type': 'application/json'}});
-	
+
 	var tabData = [tabNm, tabLk];
 	var data = {
 		tabData:tabData,
 		action:'create'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
 }
 
@@ -399,12 +408,12 @@ function createTabInFrameWithCondition(tabNm, tabLk, sesKey, sesVal){
 var deleteTabInFrame = function(tabLk){
 	var tabData = [];
 	tabData[0] = tabLk;
-	
+
 	var data = {
 		tabData:tabData,
 		action:'delete'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
 }
 /* 부모창의 deleteTab 함수 호출 */
@@ -412,71 +421,71 @@ var activeDeleteTabInFrame = function(){
 	var data = {
 		action:'activeDelete'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
 }
 var allDeleteTabInFrame = function(){
 	var data = {
 		action:'allDelete'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
 }
 var returnTabInFrame = function(){
 	var data = {
 		action:'return'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
 }
 /* 부모창의 reloadTab 함수 호출 */
 var reloadTabInframe = function(tabLk){
 	var tabData = [];
 	tabData[0] = tabLk;
-	
+
 	var data = {
 		tabData:tabData,
 		action:'reload'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
 }
 var changeTabInFrame = function(tabNumber){
 	var tabData = [];
 	tabData[0] = tabNumber;
-	
+
 	var data = {
 			tabData:tabData,
 			action:'change'
 	};
-	
+
 	parent.postMessage(JSON.stringify(data),"*");
 }
 
 var activeTabInFrameList = function(targetTab){
 	var tabName = "";
-	
+
 	if("PROJECT" == targetTab) {
 		tabName = "Project List";
 	} else if("PARTNER" == targetTab) {
 		tabName = "3rd Party List";
 	} else if("OSS" == targetTab) {
-		
+
 	} else if("LICENSE" == targetTab) {
-		
+
 	}
-	
+
 	if(tabName != "") {
 		var _prjTabIdx = getTabIndex(tabName);
 		if(_prjTabIdx != "") {
 			var tabData = [];
 			tabData[0] = _prjTabIdx;
-			
+
 			var data = {
 					tabData:tabData,
 					action:'change'
 			};
-			
+
 			parent.postMessage(JSON.stringify(data),"*");
 		}
 	}
@@ -491,13 +500,13 @@ var createTab = function(tabNm, tabLk){
 		tabLink = tabArr[0],
 		tabAnchor = tabArr[0].replace(/#/g, ''),
 		tabNumber = -1;
-	
+
 	if(tab_length > 20){
 		alertify.error('Can not exceed 20 pages.', 0);
-		
+
 		return;
 	}
-	
+
 	oldTabName = '';
 	$tabs.find('.nav-tab-menu li span').each(function (i) {
 		if ($(this).text() == tabName) {
@@ -505,72 +514,72 @@ var createTab = function(tabNm, tabLk){
 			tabNumber = i;
 		}
 	});
-	
+
 	if(tabName != 'Project Editor'){
 		if (tabNumber >= 0) {
 			deleteTabByName(oldTabName);
-		}	
+		}
 	}
-	
+
 	/*
 	 * 2016.11.03 hk-cho
 	 * - '/project/identification'의 경우 path가 아닌 querystring을 받기 때문에 div.contents의 id가 중복되는 현상 발생
-	 * /project/identification이 넘어올 경우 id에 식별자를 추가하여 id중복 현상 제거 
+	 * /project/identification이 넘어올 경우 id에 식별자를 추가하여 id중복 현상 제거
 	 */
 	var frameSrc = tabAnchor;
 	var checkProjIden = tabAnchor.split('/');
-	
+
 	if(checkProjIden[1] == 'oss'){
 		frameSrc = tabLk.replace('#','');
 	}
-	
+
 	var appendIFrame = "<iframe src='" + frameSrc + "' style='width:100%; height:100%;' scrolling='yes' marginwidth='0' marginheight='0' frameborder='0' vspace='0' hspace='0'></iframe>";
-	
+
 	$(".contents").append("<div id=" + tabAnchor.replace(/\//g, '-') + " class='contentsBack'>" + appendIFrame + "</div>");
 	$("<li><span><a class=" + tabAnchor.replace(/\//g, '-') + " href=" + tabLink.replace(/\//g, '-') + ">" + tabName + "</a></span><input type='button' value='x' class='ui-icon ui-icon-close' /></li>")
 	.appendTo(".nav-tab-menu");
-	
+
 	$("#nav-tabs").tabs("refresh");
-	
+
 	//마지막 탭으로 이동
 	$('#nav-tabs').tabs('option', 'active', -1);
-	
+
 	//현태탭 변수에 저장
 	if(!deleteFlag) {
 		lastTab = selectTab;
 	} else {
 		deleteFlag = false;
 	}
-	
+
 	selectTab = $("#nav-tabs").tabs('option','active');
-	
+
 	// 화면갱신
 	viewRefresh();
-	
+
 	//iframe에 focus 2017.03.22
 	var iframe = $("#"+tabAnchor.replace(/\//g, '-'))[0];
 	var iframe_html = $(iframe).find('iframe')[0];
-	
+
 	body_html = $(iframe_html).focus();
 }
 var deleteTabByName = function(tabLk){
 	var tabLink 	= tabLk.replace(/\//g,'-')
-	  , tabAnchor 	= tabLink.replace(/#/g, '.')	
-	  , parent 		= $(tabAnchor).parent().parent()	
+	  , tabAnchor 	= tabLink.replace(/#/g, '.')
+	  , parent 		= $(tabAnchor).parent().parent()
 	  , panel 		= $(tabAnchor).parent().next();
-	
+
 	$(tabLink).remove();	//div
 	parent.remove();		//li
 	panel.remove();			//input
-	
+
 	$("#nav-tabs").tabs("refresh");
 	$('#nav-tabs').tabs('option', 'active', lastTab);
 }
 
-var deleteTab = function(tabLk){	
+var deleteTab = function(tabLk){
 	var tabs = $("#nav-tabs").tabs();
 	var panel = tabs.find( ".ui-state-default:eq("+selectTab+")" );
-	
+
 	panel.find(".ui-icon-close").trigger("click");
 }
 
@@ -579,26 +588,26 @@ var activeDeleteTab = function(){
 	var tabNumber = $("#nav-tabs").tabs('option','active');
 	var panelId = tabs.find( ".ui-tabs-active" ).remove().attr( "aria-controls" );
     $( "#" + panelId ).remove();
-  
+
     $('#nav-tabs').tabs('option', 'active', selectTab+1);
-    
+
     if(lastTab > selectTab) {
     	lastTab--;
     }
-    
+
     tabs.tabs( "refresh" );
     $(document).focus();
 }
 
 var allDeleteTab = function(){
 	var tabs = $("#nav-tabs").tabs();
-	
+
 	$.each(tabs.find( ".ui-state-default" ),function(i,panel){
 		var panelId = $(panel).attr( "aria-controls" );
 		$(panel).remove();
 		$( "#" + panelId ).remove();
 	});
-	
+
 	tabs.tabs( "refresh" );
 	$(document).focus();
 }
@@ -606,12 +615,12 @@ var allDeleteTab = function(){
 var reloadTab = function(tabLk,act){
 	$('iframe').each(function(){
 		var url = $(this).attr('src');
-		
+
 		if(url.indexOf("?") != -1){
 			var tmp = url.split('?');
 			url = tmp[0];
 		}
-		
+
 		if(url == tabLk){
 			if(act == "create"){
 				$(this).attr('src', url);
@@ -624,7 +633,7 @@ var reloadTab = function(tabLk,act){
 
 var returnTab = function(){
 	$('#nav-tabs').tabs('option', 'active', lastTab);
-	
+
 	var temp = 0;
 	temp = lastTab;
 	lastTab = selectTab;
@@ -634,7 +643,7 @@ var changeTab = function(pos){
 	var tabs = $("#nav-tabs");
 	var tabNumber = tabs.tabs('option','active');
 	var tab_length = tabs.find('.nav-tab-menu li span').length;
-	
+
 	if(isNaN(pos)) {
 		if(pos=='right') {
 			tabNumber++;
@@ -648,7 +657,7 @@ var changeTab = function(pos){
 	}
 
 	if(tabNumber > tab_length - 2) {
-	} if(tabNumber < 0) {		
+	} if(tabNumber < 0) {
 	} else {
 		$('#nav-tabs').tabs('option', 'active', tabNumber);
 		lastTab = selectTab;
@@ -698,7 +707,7 @@ function gridCleanErrMsg(gridStr) {
 function gridValidMsg(msgData,gridStr) {
 	var target = $("#"+gridStr);
 	var mainIds = target.jqGrid('getDataIDs');
-	
+
 	$.each(msgData,function(key,value) {
 		if("isValid" != key) {
 			var seqSuffix = key.split(".");
@@ -706,33 +715,33 @@ function gridValidMsg(msgData,gridStr) {
 			var subIds = "";
 			var gridId = "";
 			var subGrid;
-			
+
 			// gridId와 실제 rowId 가 다를 경우 처리
 			for(var i in mainIds){
 				gridId = target.jqGrid('getCell',mainIds[i],'gridId');
-				
+
 				if(rowId==gridId && mainIds[i]!=gridId){
 					rowId = mainIds[i];
-					
+
 					break;
 				}
-				
+
 				subGrid = $("#"+gridStr+"_"+mainIds[i]+"_t");
 				subIds = subGrid.jqGrid('getDataIDs');
-				
+
 				for(var y in subIds){
 					gridId = subGrid.jqGrid('getCell',subIds[y],'gridId');
-					
+
 					if(rowId==gridId && subIds[y]!=gridId){
 						rowId = subIds[y];
-						
+
 						break;
 					}
 				}
 			}
-			
+
 			var colName = $("#"+gridStr+" #"+rowId).parents("table").attr("id")+"_"+seqSuffix[0];
-			
+
 			// 그리드 메세지 그리기
 			$("#"+gridStr+" #"+rowId+" td[aria-describedby=\""+colName+"\"]").append('<div class=\"'+gridStr+"_"+rowId+' retxt\">'+ value +'</div>');
 		}
@@ -744,84 +753,84 @@ function gridValidMsgNew(msgData,gridStr, type) {
 	type = type || "NORMAL";
 	var target = $("#"+gridStr);
 	var mainIds = target.jqGrid('getDataIDs');
-	
+
 	if(msgData) {
 		$.each(msgData,function(key,value) {
 			if("isValid" != key && "validMsg" != key && "resultData" != key && "externalData" != key && "externalData2" != key) {
 				var seqSuffix = key.split(".");
 				if(seqSuffix.length  > 1) {
 					var rowId = seqSuffix[1];
-					
+
 					if(seqSuffix[1].indexOf("-") > -1 && type == "NORMAL"){
 						rowId = seqSuffix[1].replace(/(\d+)(?=\-)(.+)/g, "$1"); // rowId가 multi License라서 a to b 라면 a값만 가져옴.
 					}
-					
+
 					var errRow = $("#"+rowId+" > td[aria-describedby='"+gridStr + "_" + seqSuffix[0]+"']");
-					
+
 					// 그리드 메세지 그리기
 					if(errRow) {
 						errRow.append('<div class=\"'+gridStr+"_"+rowId+' retxt\">'+ value +'</div>');
 					}
 				}
 			}
-		});		
+		});
 	}
 }
 
 function gridValidMsg2(msgData,gridStr) {
 	var mainIds = $("#"+gridStr).jqGrid('getDataIDs');
-	
+
 	$.each(msgData,function(key,value) {
 		if("isValid" != key) {
 			var seqSuffix = key.split(".");
 			var rowId = seqSuffix[1];
 			var subIds = "";
 			var gridId = "";
-			
+
 			// gridId와 실제 rowId 가 다를 경우 처리
 			for(var i in mainIds){
 				gridId = $("#"+gridStr).jqGrid('getCell',mainIds[i],'componentId');
-				
+
 				if(rowId==gridId && mainIds[i]!=gridId){
 					rowId = mainIds[i];
 					break;
 				}
-				
+
 				subIds = $("#"+gridStr+"_"+mainIds[i]+"_t").jqGrid('getDataIDs');
-				
+
 				for(var y in subIds){
 					gridId = $("#"+gridStr+"_"+mainIds[i]+"_t").jqGrid('getCell',subIds[y],'gridId');
-					
+
 					if(rowId==gridId && subIds[y]!=gridId){
 						rowId = subIds[y];
-						
+
 						break;
 					}
 				}
 			}
-			
+
 			var colName = $("#"+gridStr+" #"+rowId).parents("table").attr("id")+"_"+seqSuffix[0];
-			
+
 			// 그리드 메세지 그리기
 			$("#"+gridStr+" #"+rowId+" td[aria-describedby=\""+colName+"\"]").append('<div class=\"'+gridStr+"_"+rowId+' retxt\">'+ value +'</div>');
 		}
 	});
 }
-		
+
 function createValidMsgComplex(msgData){
 	hideErrMsg();
-	
+
 	//닉네임, 그리드데이터, 일반 인풋 Validation 체크
 	$.each(msgData,function(key,value) {
 		if("isValid" != key && "validMsg" != key) {
 			if(key.indexOf(".") > -1 ){
 				var seqSuffix = key.split(".");
 				var targetId = seqSuffix[1] + "_" + seqSuffix[0];
-				
+
 				if(seqSuffix[0]=='licenseNicknames'){
 					$('input[name=licenseNicknames]:eq('+(Number(seqSuffix[1])-1)+')').parent().next("span.retxt").html(value).show();
 				}
-				
+
 				if($('input[id='+targetId+']').length > 0) {
 					$('input[id='+targetId+']').after(makeErrMsg(value)).show();
 				} else if($('textarea[id='+targetId+']').length > 0) {
@@ -837,7 +846,7 @@ function createValidMsgComplex(msgData){
 				if(key == 'validMsgModelList') {
 					$('#validMsgModelList').html(value).show();
 				}
-				
+
 				if($('input[name='+key+']').length > 0) {
 					$('input[name='+key+']').next("span.retxt,div.retxt").html(value).show();
 				} else if($('textarea[name='+key+']').length > 0) {
@@ -856,10 +865,10 @@ function hidePageNav(pagerId) {
 	if($("#"+pagerId+"_center")) {
 		$("#"+pagerId+"_center").hide();
 	}
-	
+
 	if($("#"+pagerId+"_right")) {
 		$("#"+pagerId+"_right").hide();
-	}	
+	}
 }
 
 function gridListBulkEdit(listId, fn) {
@@ -885,7 +894,7 @@ function createJSON(postdata) {
 	if (postdata.id === '_empty') {
 		postdata.id = null; // rest api expects int or null
 	}
-		
+
 	return JSON.stringify(postdata)
 }
 //비교 및 연산
@@ -895,7 +904,7 @@ function changeObjectToArray(obj){
 	} else if(typeof obj =='string') {
 		obj = [obj];
 	}
-	
+
 	return obj;
 }
 
@@ -1023,7 +1032,7 @@ var autoComplete = {
 				}
 			});
 		}
-		
+
 		if($(".autoComLicenseLong").length > 0) {
 			commonAjax.getLicenseTags().success(function(data, status, headers, config){
 				if(data != null){
@@ -1037,14 +1046,14 @@ var autoComplete = {
 								obligation : obj.obligation,
 								obligationChecks : obj.obligationChecks
 							}
-							
+
 							autoComplete.licenseLongTags.push(tag);
 						}
 					});
 				}
 			});
 		}
-		
+
 		if($(".autoComOss").length > 0) {
 			commonAjax.getOssTags().success(function(data, status, headers, config){
 				if(data != null){
@@ -1052,11 +1061,11 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.ossTags.push(obj.ossName);
 						}
-					})			
+					})
 				}
 			});
 		}
-		
+
 		if($('.autoComProjectNm').length > 0) {
 			commonAjax.getProjectNameTags().success(function(data, status, headers, config){
 				if(data != null){
@@ -1064,11 +1073,11 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.projectNameTags.push(obj.prjName);
 						}
-					})	
+					})
 				}
 			});
 		}
-		
+
 		if($('.autoComProjectNmConf').length > 0) {
 			commonAjax.getProjectNameConfTags().success(function(data, status, headers, config){
 				if(data != null){
@@ -1076,11 +1085,11 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.projectNameConfTags.push(obj.prjName);
 						}
-					})	
+					})
 				}
 			});
 		}
-		
+
 		if($('.autoComProjectVersion').length > 0) {
 			commonAjax.getProjectVersionTags().success(function(data, status, headers, config){
 				if(data != null){
@@ -1088,11 +1097,11 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.projectVersionTags.push(obj.prjVersion);
 						}
-					})	
+					})
 				}
 			});
 		}
-		
+
 		if($('.autoComProjectModel').length > 0) {
 			commonAjax.getProjectModelTags().success(function(data, status, headers, config){
 				if(data != null){
@@ -1100,11 +1109,11 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.projectModelTags.push(obj.modelName);
 						}
-					})	
+					})
 				}
 			});
 		}
-		
+
 		if($('.autoComParty').length > 0) {
 			commonAjax.getPartnerNmTags().success(function(data, status, headers, config){
 				if(data != null){
@@ -1112,7 +1121,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.partyNameTags.push(obj.partnerName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1123,7 +1132,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.partyConfNameTags.push(obj.partnerName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1134,7 +1143,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.softwareNameTags.push(obj.softwareName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1145,7 +1154,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.softwareConfNameTags.push(obj.softwareName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1156,7 +1165,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.softwareVersionTags.push(obj.softwareVersion);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1167,7 +1176,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.softwareConfVersionTags.push(obj.softwareVersion);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1178,7 +1187,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.binaryNameTags.push(obj.fileName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1189,7 +1198,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.binaryConfNameTags.push(obj.fileName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1200,7 +1209,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.binarySwNameTags.push(obj.softwareName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1211,7 +1220,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.binarySwNameConfTags.push(obj.softwareName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1222,7 +1231,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.binarySwVersionTags.push(obj.softwareVersion);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1233,7 +1242,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.binaryDivisionTags.push(obj.division);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1244,7 +1253,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.codeNoTags.push(obj.cdNo);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1255,7 +1264,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.codeNmTags.push(obj.cdNm);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1267,7 +1276,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.creatorTag.push(obj.userName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1278,7 +1287,7 @@ var autoComplete = {
 						if(obj!=null) {
 							autoComplete.reviewerTag.push(obj.userName);
 						}
-					})	
+					})
 				}
 			});
 		}
@@ -1294,7 +1303,7 @@ var autoComplete = {
 								division : obj.division,
 								id : obj.userId
 							}
-							
+
 							autoComplete.creatorDivisionTag.push(tag);
 						}
 					});
@@ -1310,7 +1319,7 @@ var autoComplete = {
 	    .autocomplete( "instance" )._renderItem = function( ul, item ) {
 	    	return $( "<li>" ).append( "<div>" + item.label + "<strong> (" + item.type + ") </strong>" + item.obligation + item.restriction + "</div>" ).appendTo( ul );
 	    };
-	    
+
 	    //hklee 2016 11 14
 	    $(".autoComLicenseLong").autocomplete({source: autoComplete.licenseLongTags, minLength: 0, //delay: 500,
 	    	open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }
@@ -1319,43 +1328,43 @@ var autoComplete = {
 	    .autocomplete( "instance" )._renderItem = function( ul, item ) {
 	    	return $( "<li>" ).append( "<div>" + item.label + "<strong> (" + item.type + ") </strong>" + item.obligation + "</div>" ).appendTo( ul );
 	    };
-	    
+
 	    $(".autoComOss").autocomplete({source: autoComplete.ossTags, minLength: 3,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComProjectNm").autocomplete({source: autoComplete.projectNameTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComProjectNmConf").autocomplete({source: autoComplete.projectNameConfTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
 
 	    $(".autoComProjectVersion").autocomplete({source: autoComplete.projectVersionTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComProjectModel").autocomplete({source: autoComplete.projectModelTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
 
 	    $(".autoComParty").autocomplete({source: autoComplete.partyNameTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComConfParty").autocomplete({source: autoComplete.partyConfNameTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComSwNm").autocomplete({source: autoComplete.softwareNameTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComConfSwNm").autocomplete({source: autoComplete.softwareConfNameTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComSwVer").autocomplete({source: autoComplete.softwareVersionTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComConfSwVer").autocomplete({source: autoComplete.softwareConfVersionTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComBinary").autocomplete({source: autoComplete.binaryNameTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComConfBinary").autocomplete({source: autoComplete.binaryConfNameTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
 
@@ -1373,10 +1382,10 @@ var autoComplete = {
 
 	    $(".autoComCodeNm").autocomplete({source: autoComplete.codeNmTags, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComCreator").autocomplete({source: autoComplete.creatorTag, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {$(this).autocomplete("search");}});
-	    
+
 	    $(".autoComReviewer").autocomplete({source: autoComplete.reviewerTag, minLength: 0,open: function() { $(this).attr('state', 'open'); },close: function () { $(this).attr('state', 'closed'); }})
 	    .focus(function() {if ($(this).attr('state') != 'open') {
 	    	$(this).autocomplete("search");}
@@ -1396,7 +1405,7 @@ var autoComplete = {
 	    	} else {
 	    		return $( "<li>" ).append( "<div>" + item.label + "("+item.id+")"+"</div>" ).appendTo( ul );
 	    	}
-	    	
+
 	    };
 	}
 }
@@ -1404,32 +1413,32 @@ var autoComplete = {
 // 날짜 유효성검사 및 포맷변환
 function validationDate() {
 	var days = [31,28,31,30,31,30,31,31,30,31,30,31];
-	
+
 	$(".cal").each(function(i,v){
 		if(v.value != ""){
 			var value = v.value;
 			var pattenDate = /\d{4}-\d{2}-\d{2}/g; // 포맷 검사 패턴 0000.00.00
 			var pattenDot = /\./g; // . 유무 검사
-			
+
 			if(!pattenDate.test(value)) {
-				
+
 				value = value.replace(/\.+/g,".");
-				
+
 				var matchDot = new Array();
 				var temp = ""
-					
+
 				for(var i=0; (matchDot[i] = pattenDot.exec(value)) != null;i++);
-				
+
 				var matchLen = matchDot.length-1;
-				
-				if(matchLen != null && matchLen > 0 && matchLen <= 2) {					
+
+				if(matchLen != null && matchLen > 0 && matchLen <= 2) {
 					if(matchLen == 1) {
 						var year = value.substring(0,matchDot[0].index);
 						var month = value.substring(matchDot[0].index+1,(value.length - matchDot[0].index) == 1 ? matchDot[0].index+2:matchDot[0].index+3);
-						
+
 						if(month > 0 && month < 13) {
 							var tempDate = value.substring(0,4)+"."+ (month.length == 1?"0":"") + month;
-							
+
 							v.value=tempDate;
 						} else {
 							return false;
@@ -1438,16 +1447,16 @@ function validationDate() {
 						var year = value.substring(0,matchDot[0].index);
 						var month = value.substring(matchDot[0].index+1,matchDot[1].index);
 						var day = value.substring(matchDot[1].index+1,(value.length - matchDot[1].index) == 1 ? matchDot[1].index+2:matchDot[1].index+3)
-						
+
 						if(month > 0 && month <= 12) {
 							var maxDay = days[parseInt(month)-1];
-							
-							if(month == '02') { 
+
+							if(month == '02') {
 								if(parseInt(year) % 4 == 0) {
-									maxDay += 1; 
+									maxDay += 1;
 								}
 							} // 윤년 2월일경우 일수를 29일로
-							
+
 							if(day > 0 && day <= maxDay) {
 								var tempDate = year+"."+ (month.length == 1?"0":"") +month+"."+ (day.length == 1?"0":"") +day;
 								v.value=tempDate;
@@ -1458,22 +1467,22 @@ function validationDate() {
 							return false;
 						}
 					}
-				} else {				
+				} else {
 					value=value.replace(/\./gi, ''); // . 제거
 					var len = value.length;
-					
+
 					if(len == 4) {
 						v.value=value;
 					} else if(len == 5) {
 						var tempDate = value.substring(0,4)+".0"+value.substring(4,5);
-						
+
 						v.value=tempDate;
 					} else if(len == 6) {
 						var month = value.substring(4,6);
-						
+
 						if(month > 0 && month < 13) {
 							var tempDate = value.substring(0,4)+"."+month;
-							
+
 							v.value=tempDate;
 						} else {
 							return false;
@@ -1482,19 +1491,19 @@ function validationDate() {
 						var year = value.substring(0,4);
 						var month = value.substring(4,6);
 						var day = value.substring(6,8);
-						
+
 						if(month > 0 && month <= 12) {
 							var maxDay = days[parseInt(month)-1];
-							
-							if(month == '02') { 
+
+							if(month == '02') {
 								if(parseInt(year) % 4 == 0) {
-									maxDay += 1; 
+									maxDay += 1;
 								}
 							} // 윤년 2월일경우 일수를 29일로
-							
+
 							if(day > 0 && day <= maxDay) {
 								var tempDate = year+"."+month+"."+day;
-								
+
 								v.value=tempDate;
 							} else {
 								return false;
@@ -1509,7 +1518,7 @@ function validationDate() {
 			} // //패턴검사
 		} // //입력값공백
 	}); // //반복
-	
+
 	return true;
 }
 
@@ -1521,11 +1530,11 @@ function viewRefresh(){
 		var val = $('.tabMenu ul').height()/30;
 
 		var agt = navigator.userAgent.toLowerCase();
-		
+
 		if(agt.indexOf("chrome") > -1) {
 			$('.contents').css('top', (((42*val)-(parseInt(val)*10.5))-(0.9/(parseInt(val)+1)))+'px');
 		}
-		
+
 		setTimeout(function(){
 			var cHeight = $('.nav-tab-menu').height();
 			$('.contentsFixBack').height(cHeight+9);
@@ -1537,13 +1546,13 @@ function viewRefresh(){
 // 브라우저 창 크기에 따라 jqGrid Width 자동 조절
 function tableRefresh(){
 	var width = $('#wrapIframe').width();
-	
+
 	$('.ui-jqgrid-btable').each(function(){
 		var id =  $(this).attr('id');
-		
+
 		if(id.indexOf('_') == -1){
 			$(this).jqGrid('setGridWidth', 0, true);
-			$(this).jqGrid('setGridWidth', width, true);			
+			$(this).jqGrid('setGridWidth', width, true);
 		}
 	})
 }
@@ -1553,8 +1562,8 @@ function uiBlock(objArr, bln){
 	// default
 	$.blockUI.defaults.overlayCSS.backgroundColor = '#ffffff';
 	$.blockUI.defaults.overlayCSS.opacity = 0.1;
-	$.blockUI.defaults.overlayCSS.cursor = 'default'; 
-	
+	$.blockUI.defaults.overlayCSS.cursor = 'default';
+
 	// bln : Block or unBlock
 	for(var o in objArr){
 		if(bln) {
@@ -1580,27 +1589,27 @@ function openNVD(cveId) {
 function openNVD2(_ossName, _url){
 	if(_popupVuln == null || _popupVuln.closed) {
 		_popupVuln = window.open(_url, "vulnViewPopup_"+_ossName, "width=900, height=600, toolbar=no, location=no, left=100, top=100, scrollbars=yes, resizeable=yes");
-		
+
 		if(!_popupVuln || _popupVuln.closed || typeof _popupVuln.closed=='undefined') {
 			alertify.alert('<spring:message code="msg.common.window.allowpopup" />', function(){});
 		}
 	} else {
 		_popupVuln.close();
-		
+
 		_popupVuln = window.open(_url, "vulnViewPopup_"+_ossName, "width=900, height=600, toolbar=no, location=no, left=100, top=100, scrollbars=yes, resizeable=yes");
 	}
 }
 
-function openCommentHistory(_url) {	
+function openCommentHistory(_url) {
 	if(_popupComment == null || _popupComment.closed){
 		_popupComment = window.open(_url, "commentPopup", "width=900, height=600, toolbar=no, location=no, left=100, top=100, scrollbars=yes, resizeable=yes");
-		
+
 		if(!_popupComment || _popupComment.closed || typeof _popupComment.closed=='undefined') {
 			alertify.alert('<spring:message code="msg.common.window.allowpopup" />', function(){});
 		}
 	} else {
 		_popupComment.close();
-		
+
 		_popupComment = window.open(_url, "commentPopup", "width=900, height=600, toolbar=no, location=no, left=100, top=100, scrollbars=yes, resizeable=yes");
 	}
 }
@@ -1614,7 +1623,7 @@ function gridValidMsgChk(rowId,idName,MsgData,target) {
 			chkMsgData[key]=value;
 		}
 	});
-	
+
 	if(target == "srcList"){
 		window.srcValidMsgData = chkMsgData;
 	} else if(target == "binAndroidList") {
@@ -1639,7 +1648,7 @@ function gridDiffMsgChk(rowId,idName,MsgData,target) {
 			chkMsgData[key]=value;
 		}
 	});
-	
+
 	if(target == "srcList"){
 		window.srcDiffMsgData = chkMsgData;
 	} else if(target == "binAndroidList") {
@@ -1665,7 +1674,7 @@ function gridInfoMsgChk(rowId,idName,MsgData,target) {
 			chkMsgData[key]=value;
 		}
 	});
-	
+
 	if(target == "binAndroidList") {
 		window.binAndroidInfoMsgData = chkMsgData;
 	} else if(target == "binList") {
@@ -1677,15 +1686,15 @@ function gridValidMsgRowId(msgData,gridStr,selRowId) {
 	if(msgData) {
 		$.each(msgData,function(key,value) {
 			var seqSuffix = key.split(".");
-			
+
 			if(seqSuffix.length  > 1) {
 				var rowId = seqSuffix[1];
 				var errRow = "";
-				
+
 				if(selRowId == rowId){
 					errRow = $("#"+rowId+" > td[aria-describedby='"+gridStr + "_" + seqSuffix[0]+"']");
 				}
-				
+
 				if(errRow) {
 					errRow.append('<div class=\"'+gridStr+"_"+rowId+' retxt\">'+ value +'</div>');
 				}
@@ -1699,15 +1708,15 @@ function gridDiffMsgRowId(msgData,gridStr,selRowId) {
 	if(msgData) {
 		$.each(msgData,function(key,value) {
 			var seqSuffix = key.split(".");
-			
+
 			if(seqSuffix.length  > 1) {
 				var rowId = seqSuffix[1];
 				var errRow = "";
-				
+
 				if(selRowId == rowId){
 					errRow = $("#"+rowId+" > td[aria-describedby='"+gridStr + "_" + seqSuffix[0]+"']");
 				}
-				
+
 				if(errRow) {
 					errRow.append('<div class=\"'+gridStr+"_"+rowId+' retxtb\">'+ value +'</div>');
 				}
@@ -1721,28 +1730,28 @@ function gridDiffMsg(msgData,gridStr, type) {
 	type = type || "NORMAL";
 	var target = $("#"+gridStr);
 	var mainIds = target.jqGrid('getDataIDs');
-	
+
 	if(msgData){
 		$.each(msgData,function(key,value) {
 			if("isValid" != key && "validMsg" != key && "resultData" != key && "externalData" != key && "externalData2" != key && "externalData3" != key) {
 				var seqSuffix = key.split(".");
-				
+
 				if(seqSuffix.length  > 1) {
 					var rowId = seqSuffix[1];
 					var diffRow;
-					
+
 					if(type == "NORMAL"){
 						if(rowId.indexOf("-") > -1) {
-						
+
 						} else {
 							diffRow = $("#"+rowId+" > td[aria-describedby='"+gridStr + "_" + seqSuffix[0]+"']");
 						}
 					}
-					
+
 					if(type == "SELF"){
 						diffRow = $("#"+rowId+" > td[aria-describedby='"+gridStr + "_" + seqSuffix[0]+"']");
 					}
-					
+
 					// 그리드 메세지 그리기
 					if(diffRow) {
 						diffRow.append('<div class=\"'+gridStr+"_"+rowId+' retxtb\">'+ value +'</div>');
@@ -1758,15 +1767,15 @@ function gridInfoMsgRowId(msgData,gridStr,selRowId) {
 	if(msgData) {
 		$.each(msgData,function(key,value) {
 			var seqSuffix = key.split(".");
-			
+
 			if(seqSuffix.length  > 1) {
 				var rowId = seqSuffix[1];
 				var errRow = "";
-				
+
 				if(selRowId == rowId){
 					errRow = $("#"+rowId+" > td[aria-describedby='"+gridStr + "_" + seqSuffix[0]+"']");
 				}
-				
+
 				if(errRow) {
 					errRow.append('<div class=\"'+gridStr+"_"+rowId+' retxtg\">'+ value +'</div>');
 				}
@@ -1777,21 +1786,21 @@ function gridInfoMsgRowId(msgData,gridStr,selRowId) {
 function gridInfoMsg(msgData,gridStr) {
 	var target = $("#"+gridStr);
 	var mainIds = target.jqGrid('getDataIDs');
-	
+
 	$.each(msgData,function(key,value) {
 		if("isValid" != key && "validMsg" != key && "resultData" != key && "externalData" != key && "externalData2" != key && "externalData3" != key) {
 			var seqSuffix = key.split(".");
-			
+
 			if(seqSuffix.length  > 1) {
 
 				var rowId = seqSuffix[1];
 				var diffRow;
-				
+
 				if(rowId.indexOf("-") > -1) {
 				} else {
 					diffRow = $("#"+rowId+" > td[aria-describedby='"+gridStr + "_" + seqSuffix[0]+"']");
 				}
-				
+
 				// 그리드 메세지 그리기
 				if(diffRow) {
 					diffRow.append('<div class=\"'+gridStr+"_"+rowId+' retxtg\">'+ value +'</div>');
@@ -1801,28 +1810,28 @@ function gridInfoMsg(msgData,gridStr) {
 	});
 }
 
-var getTabIndex = function(tabNm){ 
+var getTabIndex = function(tabNm){
 	var $id = $('#nav-tabs', parent.document); // parent.document도 가능
 	var index = "";
-	
+
 	$id.find('.nav-tab-menu li span').each(function (i) {
 		if($(this).text() == tabNm){
 			index = i-1;
 		}
 	});
-	
+
 	return index;
 }
 
 var checkAll = function(targetDiv, taget) {
 	var classObj = $("."+targetDiv).find(".sheetNum");
-	
+
 	if($(taget).is(":checked")) {
 		classObj.prop("checked", true);
 	} else {
 		classObj.prop("checked", false);
 	}
-	
+
 	classObj.change(function() {
 		var cnt=0;
 		classObj.each(function(idx) {
@@ -1830,7 +1839,7 @@ var checkAll = function(targetDiv, taget) {
 				cnt++;
 			}
 		});
-		
+
 		if(cnt == classObj.length-1) {
 			$(taget).prop("checked", true);
 		} else {
@@ -1839,31 +1848,31 @@ var checkAll = function(targetDiv, taget) {
 	});
 }
 
-function LPAD(s, c, n) {   
+function LPAD(s, c, n) {
     if (! s || ! c || s.length >= n) {
         return s;
     }
- 
+
     var max = (n - s.length)/c.length;
-    
+
     for (var i = 0; i < max; i++) {
         s = c + s;
     }
- 
+
     return s;
 }
 
-function RPAD(s, c, n) { 
+function RPAD(s, c, n) {
     if (! s || ! c || s.length >= n) {
         return s;
     }
- 
+
     var max = (n - s.length)/c.length;
-    
+
     for (var i = 0; i < max; i++) {
         s += c;
     }
- 
+
     return s;
 }
 
@@ -1874,26 +1883,26 @@ function getFormData($form){
     $.map(unindexed_array, function(n, i){
         indexed_array[n['name']] = n['value'];
     });
-    
+
     return indexed_array;
 }
 
 function getCookie(cname) {
     var name = cname + "=";
     var ca = document.cookie.split(';');
-    
+
     for(var i=0; i<ca.length; i++) {
         var c = ca[i];
-        
+
         while (c.charAt(0)==' ') {
         	c = c.substring(1);
         }
-        
+
         if (c.indexOf(name) != -1) {
         	return c.substring(name.length, c.length);
         }
     }
-    
+
     return "";
 }
 
@@ -1901,19 +1910,19 @@ function setCookie(cname, cvalue, exdays) {
     var d = new Date();
     d.setTime(d.getTime() + (exdays*24*60*60*1000));
     var expires = "expires="+d.toUTCString();
-    
+
     document.cookie = cname + "=" + cvalue + "; " + expires;
 }
 
 function showHelpLink(id, target){
 	var _target = "helpLink";
-	
+
 	if(target && target.length > 0) {
 		_target = target;
 	}
-	
+
 	var _showItem = $('#'+_target);
-	
+
 	if(_showItem && _showItem.length > 0) {
 		$.ajax({
 			type: 'GET',
@@ -1923,10 +1932,10 @@ function showHelpLink(id, target){
 			success : function(data){
 				if(data.processGuide){
 					var contents = data.processGuide.contents;
-					
+
 					if(data.processGuide.useYn == "Y") {
 						_showItem.show();
-						
+
 						if(contents && contents.trim()) {
 							_showItem.attr("title", contents).tooltip({
 								content: function () {
@@ -1934,7 +1943,7 @@ function showHelpLink(id, target){
 								}
 							});
 						}
-						
+
 						if(data.processGuide.url && data.processGuide.url.trim()){
 							_showItem.attr("href", data.processGuide.url);
 							_showItem.attr("target", "_blank");
@@ -1952,7 +1961,7 @@ function showHelpLink(id, target){
 function moveTabInFrameByCommentPopup(prjId, stage){
 	var tabIdx = "";
 	var urlTxt = "";
-	
+
 	if(stage == "basicInfoPrj") {
 		tabIdx = prjId+"_Project";
 		urlTxt = '#/project/edit/'+prjId;
@@ -1969,9 +1978,9 @@ function moveTabInFrameByCommentPopup(prjId, stage){
 		tabIdx = prjId+"_3rdParty";
 		urlTxt = '#/partner/edit/'+prjId;
 	}
-	
+
 	var idx = getTabIndex(tabIdx);
-	
+
 	if(idx != "") {
 		changeTabInFrame(idx);
 	} else {
@@ -1981,10 +1990,10 @@ function moveTabInFrameByCommentPopup(prjId, stage){
 
 function calValidation(target, e){
 	var result = $(target).val();
-	
+
 	if(/\d+/.test(result)) {
 		result = result.match(/\d+/g).join("");
-		
+
 		$(target).val(result);
 	} else {
 		$(target).val("");
@@ -1994,10 +2003,10 @@ function calValidation(target, e){
 function isMaximumRowCheck(totalRow){
 	if(totalRow > +gRowCnt){
 		alertify.error(getMsgMaxRowCnt(), 0);
-		
+
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -2009,20 +2018,20 @@ function setMaxRowCnt(maxRowCnt){
 
 function getMsgMaxRowCnt(){
 	var msgGRowCnt = gRowCnt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-	
+
 	return "More than "+msgGRowCnt+" can not be exported.";
 }
 
 function getBarChart(obj){
 	var tooltip = obj.tooltip;
-	
+
 	if(typeof obj.tooltip != "object"){
 		tooltip = {
 			pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
 			shared: true
-		};		
+		};
 	};
-	
+
 	return new Highcharts.chart(obj.chartId, {
 		chart: {
 			type: 'column'
@@ -2112,20 +2121,20 @@ $(document).ready(function (){
 
 	      // notifier defaults
 	      notifier:{
-	          // auto-dismiss wait time (in seconds)  
+	          // auto-dismiss wait time (in seconds)
 	          delay:3,
 	          // default position
 	          position:'bottom-right'
 	      },
 
-	      // language resources 
+	      // language resources
 	      glossary:{
 	          // dialogs default title
 	          title:'FOSSLight Hub',
 	          // ok button text
 	          ok: 'OK',
 	          // cancel button text
-	          cancel: 'Cancel'            
+	          cancel: 'Cancel'
 	      },
 
 	      // theme settings
@@ -2134,7 +2143,7 @@ $(document).ready(function (){
 	          input:'ajs-input',
 	          // class name attached to ok button
 	          ok:'ajs-ok',
-	          // class name attached to cancel button 
+	          // class name attached to cancel button
 	          cancel:'ajs-cancel'
 	      }
 	  };
@@ -2145,23 +2154,23 @@ $(document).ready(function (){
  * @param str       : 체크할 문자열
  */
 function isEmpty(str){
-     
+
     if(typeof str == "undefined" || str == null || str == "")
         return true;
     else
         return false ;
 }
- 
+
 /**
  * 문자열이 빈 문자열인지 체크하여 기본 문자열로 리턴한다.
  * @param str           : 체크할 문자열
  * @param defaultStr    : 문자열이 비어있을경우 리턴할 기본 문자열
  */
 function nvl(str, defaultStr){
-     
+
     if(typeof str == "undefined" || str == null || str == "")
         str = defaultStr ;
-     
+
     return str ;
 }
 
@@ -2169,3 +2178,32 @@ function nvl(str, defaultStr){
 var searchStringOptions = {searchoptions:{sopt:['cn','eq','ne','bw','bn','ew','en','nc']}};
 var searchNumberOptions = {searchoptions:{sopt:['ge','le','gt','lt','eq']}};
 var searchDateOptions = {searchoptions:{sopt:['eq','lt','le','gt','ge']}};
+
+
+function replaceWithLink(text){
+	return text.replace(LINKREGEXP, findAndReplace);
+}
+
+function findAndReplace(match) {
+	var prj = /PRJ/i;
+	var third = /3rd/i;
+	var arrLink = match.split('-');
+<<<<<<< HEAD
+<<<<<<< HEAD
+	var id = arrLink[1].substring(0, arrLink[1].length-1);
+=======
+	var id = arrLink[1];
+>>>>>>> 5ca73edbf9ba74557c1435ba15b7a189adadcebd
+=======
+	var id = arrLink[1];
+>>>>>>> 5ca73edbf9ba74557c1435ba15b7a189adadcebd
+	var protocol = window.location.protocol;
+	var host =  window.location.host;
+	var url = protocol + "//" + host;
+	if(prj.test(match)) {
+		url += "/project/view/" + id;
+	} else if(third.test(match)) {
+		url += "/partner/view/" + id;
+	}
+	return "<a href=" + url +" class='urlLink2' target='_blank' onclick='window.open(this.href)'>" +  match + "</a>";
+}

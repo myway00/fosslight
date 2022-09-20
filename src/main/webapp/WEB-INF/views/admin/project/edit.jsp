@@ -1,5 +1,7 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-proj-edit.js?${jsVersion}"></script>
 <%@ include file="/WEB-INF/constants.jsp"%>
+<script type="text/javascript" src="${ctxPath}/js/tutorial/tutorial-proj-edit.js?${jsVersion}"></script>
 <!-- wrap -->
 <div id="wrapIframe">
 	<c:if test="${not empty project.prjId}">
@@ -48,10 +50,11 @@
 		</div>
 	</div>
 	</c:if>
-	
+	<input type="button" value=" 📢 Continue Tutorial " id="continue_tutorial" />
 	<div class="${not empty project.prjId ? 'projectContents' : ''}">
 		<!---->
-		<div class="tbws1 w1025 mt10">
+		<div class="tbws1 w1025 mt10" id="next_add">
+
 			<form name="projectForm" id="projectForm" action="" method="post">
 				<input type="hidden" name="prjId" style="display: none;"/>
 				<input type="hidden" name="prjModelJson" style="display: none;"/>
@@ -225,22 +228,16 @@
 						<tr>
 							<th class="dCase"><spring:message code="msg.common.field.additionalInformation" /></th>
 							<td class="dCase">
-								<c:if test="${project.viewOnlyFlag ne 'Y'}">
-									<dt id="editAdditionalInfomation" style="height: 15px;">
-										<span class="right">
-											<input type="button" class="editModify btnViewMode" onclick="fn.editComment();"/>
-										</span>
-									</dt>
-								</c:if>
 								<div class="grid-container">
 									<div class="grid-width-100">
-										<div id="editor">${project.comment}</div>
+										<div id="editor"></div>
 									</div>
 								</div>
-								<div class="right mt5">
-									<input id="saveBtn" type='button' value='Save' class='btnCLight red right' style="margin-left:5px; display: none;"/>
-									<input id="cancelBtn" type='button' value='Cancel' class='btnCLight darkgray right' style="display: none;"/>
-								</div>
+								<c:if test="${(project.viewOnlyFlag ne 'Y') and (project.copyFlag ne 'Y') and (not empty project.prjId) }">
+									<div class="right mt5">
+										<input id="saveBtn" type='button' value='Save' class='btnCLight red right' style="margin-left:5px;" onclick="fn.editComment();"/>
+									</div>
+								</c:if>
 							</td>
 						</tr>
 						<c:if test="${project.viewOnlyFlag ne 'Y'}">
@@ -305,7 +302,14 @@
 							</td>
 						</tr>
 						</c:if>
-
+						<c:if test="${project.viewOnlyFlag eq 'Y'}">
+						<tr>
+							<th class="dCase"><spring:message code="msg.common.field.watcher" /></th>
+							<td class="dCase">
+								<div id="multiDiv" class="multiTxtSet2">
+							</td>
+						</tr>
+						</c:if>
 						<c:if test="${not empty project.prjId and 'Y' ne project.copyFlag}">
 						<tr>
 							<th class="dCase  txStr"><spring:message code="msg.common.field.creator" /></th>

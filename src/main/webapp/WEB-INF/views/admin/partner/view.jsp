@@ -4,6 +4,8 @@
 <!-- wrap -->
 <c:set var="isCommited" value="${detail.status eq 'CONF'}"/>
 <div id="wrapIframe">
+<c:if test="${detail.viewOnlyFlag eq 'Y'}">
+
 	<c:if test="${empty message}">
 		<!---->
 		<div class="projdecTop" style="height:auto;">
@@ -155,7 +157,6 @@
 								<input type="hidden" id="documentsFileId" name="documentsFileId" value="${detail.documentsFileId}" />
 							</td>
 						</tr>
-						<c:if test="${detail.viewOnlyFlag ne 'Y'}">
 						<tr>
 							<th class="dCase">Watcher</th>
 							<td class="dCase watchCase">
@@ -175,7 +176,6 @@
 								</div>
 							</td>
 						</tr>
-						</c:if>
 							<tr>
 								<th class="dCase txStr">Creator</th>
 								<td class="dCase">${detail.creatorName}</td>
@@ -264,6 +264,7 @@
 </c:if>
 <c:if test="${not empty message}">
 	${message}
+</c:if>
 </c:if>
 </div>
 <div id="blind_wrap"></div>

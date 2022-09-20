@@ -1,6 +1,5 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ include file="/WEB-INF/constants.jsp"%>
-
 <style>
 .grdrow {
     overflow:hidden;
@@ -76,5 +75,6 @@
 			</div>
 		</div>
     </div>
+    <input type="button" value=" 📢 Continue Tutorial " id="continue_tutorial" />
 </div>
 <!-- //wrap -->

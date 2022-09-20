@@ -2,7 +2,7 @@
 <%@ include file="/WEB-INF/constants.jsp"%>
 <tiles:insertAttribute name="meta" />
 <tiles:insertAttribute name="scripts" />
-<tiles:insertAttribute name="tabs-js" />
+<tiles:insertAttribute name="tabs-js" ignore="true"/>
 <tiles:insertAttribute name="tabs" />
 <div id="loading_wrap" class="loading" style="display:none;">
 	<div class="loadingBlind"></div>
