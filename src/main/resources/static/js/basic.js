@@ -2188,15 +2188,7 @@ function findAndReplace(match) {
 	var prj = /PRJ/i;
 	var third = /3rd/i;
 	var arrLink = match.split('-');
-<<<<<<< HEAD
-<<<<<<< HEAD
-	var id = arrLink[1].substring(0, arrLink[1].length-1);
-=======
 	var id = arrLink[1];
->>>>>>> 5ca73edbf9ba74557c1435ba15b7a189adadcebd
-=======
-	var id = arrLink[1];
->>>>>>> 5ca73edbf9ba74557c1435ba15b7a189adadcebd
 	var protocol = window.location.protocol;
 	var host =  window.location.host;
 	var url = protocol + "//" + host;
