@@ -70,6 +70,28 @@ $(document).ready(function () {
     "margin-top": "5px",
     "margin-bottom": "15px",
   });
+}
+
+// vail 모두 보이게 설정
+function show_vails() {
+   for (const vail of vails) {
+     vail.css("display", "block");
+   }
+}
+// tooltip의 위치를 적절히 설정
+function locate_tooltip() {
+  if (!elem_highlight) return;
+  let offset = elem_highlight.offset();
+
+  // 제목, 내용을 n번째 제목, 내용으로 수정
+  $("#tooltip_title").text(array_tooltip_data[elem_index].title);
+  $("#tooltip_content").text(array_tooltip_data[elem_index].content);
+
+  // 위치를 highlight element에 맞게 수정
+  const tooltip_width = 150;
+  let tooltip_left =
+    offset.left - (tooltip_width - elem_highlight.outerWidth(true)) / 2;
+  if (tooltip_left < 0) tooltip_left = offset.left;
 
   // 하이라이트할 부분 설정
   let elem_index = 0;
